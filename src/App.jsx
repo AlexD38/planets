@@ -1,11 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { utils } from "./utils/utils";
 import { PlanetInfos } from "./PlanetInfos";
+import { PlanetContext } from "./context/PlanetContext";
+import { Actions } from "./components/Actions";
+import { utils } from "./utils/utils";
 import "./App.css";
 
 export default function App() {
   const mountRef = useRef(null);
+  const { planetInfos, planetSize } = useContext(PlanetContext);
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -26,7 +29,32 @@ export default function App() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     // --- PLANÈTE ---
-    const planetGeometry = new THREE.SphereGeometry(5, 64, 64);
+    let calculatedPLanetSize = 5;
+    if (planetSize) {
+      if (planetSize == "xs") {
+        calculatedPLanetSize = 2;
+      }
+      if (planetSize == "s") {
+        calculatedPLanetSize = 3;
+      }
+      if (planetSize == "m") {
+        calculatedPLanetSize = 5;
+      }
+      if (planetSize == "l") {
+        calculatedPLanetSize = 7;
+      }
+      if (planetSize == "xl") {
+        calculatedPLanetSize = 8.5;
+      }
+      if (planetSize == "xxl") {
+        calculatedPLanetSize = 10;
+      }
+    }
+    const planetGeometry = new THREE.SphereGeometry(
+      calculatedPLanetSize,
+      64,
+      64
+    );
     const textureLoader = new THREE.TextureLoader();
     const nebTexture = textureLoader.load("/textures/neb.jpg", (texture) => {
       const grid = 4; // 4x4 grid
@@ -151,6 +179,7 @@ export default function App() {
     // --- ANIMATION LOOP ---
     const animate = () => {
       requestAnimationFrame(animate);
+
       planet.rotation.y += 0.002;
 
       // on peut faire tourner légèrement les étoiles pour l'effet dynamique
@@ -184,7 +213,7 @@ export default function App() {
       renderer.dispose();
       scene.clear();
     };
-  }, []);
+  }, [planetSize, planetInfos]);
 
   return (
     <>

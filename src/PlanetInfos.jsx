@@ -1,14 +1,9 @@
-import { useEffect, useState } from "react";
-import { utils } from "./utils/utils";
+import { useContext } from "react";
+import { PlanetContext } from "./context/PlanetContext";
 import "./styles.css";
 
 export const PlanetInfos = () => {
-  const [planetInfos, setPlanetInfos] = useState(null);
-
-  useEffect(() => {
-    const newPlanet = utils.generatePlanetInfos();
-    setPlanetInfos(newPlanet);
-  }, []);
+  const { planetInfos } = useContext(PlanetContext);
 
   return (
     <>
