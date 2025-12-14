@@ -1,0 +1,16 @@
+.planet-infos-container {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  border: 1px solid chartreuse;
+  padding: 1rem;
+  font-family: monospace;
+  opacity: 0.8;
+  color: chartreuse;
+  text-align: right;
+}
+.planet-infos-infos,
+.planet-infos-note,
+.planet-infos-comments {
+  text-align: left;
+}
