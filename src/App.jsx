@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { utils } from "./utils/utils";
 import { PlanetInfos } from "./PlanetInfos";
+import "./App.css";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -169,8 +170,17 @@ export default function App() {
     };
     animate();
 
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener("resize", handleResize);
+
     // --- CLEANUP ---
     return () => {
+      window.removeEventListener("resize", handleResize);
       renderer.dispose();
       scene.clear();
     };
@@ -178,7 +188,7 @@ export default function App() {
 
   return (
     <>
-      <canvas ref={mountRef} style={{ width: "100vw", height: "100vh" }} />
+      <canvas ref={mountRef} className="three-canvas" />
       <PlanetInfos />
     </>
   );
