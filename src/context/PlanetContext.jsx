@@ -15,7 +15,7 @@ export const PlanetProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const planetInfos = generateNewPlanet();
+    generateNewPlanet();
   }, []);
 
   return (
