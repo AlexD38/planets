@@ -28,6 +28,15 @@ export const PlanetInfos = () => {
         setDisplayInfos(true);
       }, 2000);
     }
+    if (e.key == "n") {
+      typewriterInstanceRef.current
+        .deleteAll(1)
+        .typeString("Planet name : ")
+        .pauseFor(500)
+        .typeString(`${planetInfos.name}.`)
+        .start();
+    }
+    return;
   };
 
   useEffect(() => {
