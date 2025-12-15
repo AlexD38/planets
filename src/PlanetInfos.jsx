@@ -11,14 +11,9 @@ export const PlanetInfos = () => {
   const [displayInfos, setDisplayInfos] = useState(false);
 
   const handleUserChoice = (e) => {
-    console.log("e: ", e);
-
     if (e.key == "y") {
       typewriterInstanceRef.current
-        .changeDeleteSpeed(2)
-        .deleteChars(
-          typewriterInstanceRef?.current?.state?.visibleNodes?.length || 2
-        )
+        .typeString("<br>")
         .typeString("Loading data")
         .pauseFor(200)
         .typeString(".")
@@ -26,12 +21,12 @@ export const PlanetInfos = () => {
         .typeString(".")
         .pauseFor(200)
         .typeString(".")
-        .pauseFor(500)
+        .pauseFor(1000)
         .start();
 
       setTimeout(() => {
         setDisplayInfos(true);
-      }, 5000);
+      }, 2000);
     }
   };
 
@@ -112,8 +107,9 @@ export const PlanetInfos = () => {
             <div className="planet-infos-infos">Infos :</div>
             <div className="planet-infos-name">Name : "{planetInfos.name}"</div>
             <div className="planet-infos-temp">
-              Temp :{planetInfos.temperature} °C
+              Average Temp : {planetInfos.temperature} °C
             </div>
+            <div className="planet-infos-type">Type : {planetInfos.type}</div>
             <div className="planet-infos-gravity">
               Gravity : {planetInfos.gravity}
             </div>
