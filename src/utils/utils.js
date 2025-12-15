@@ -29,7 +29,6 @@ export const utils = {
 
       newPlanet[key] = newInfos;
     }
-    console.log("newPlanet: ", newPlanet);
     return newPlanet;
   },
   getRandomElement(array) {

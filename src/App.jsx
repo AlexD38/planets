@@ -5,6 +5,7 @@ import { PlanetContext } from "./context/PlanetContext";
 import { Actions } from "./components/Actions";
 import { utils } from "./utils/utils";
 import "./App.css";
+import { Planet } from "./components/Planet";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -143,27 +144,31 @@ export default function App() {
       color: 0xffffff,
       size: 1,
       sizeAttenuation: false,
+      blendColor: 0xffffff,
     });
     const starMaterial2 = new THREE.PointsMaterial({
       color: 0xffffff,
       size: 1.5,
       sizeAttenuation: false,
+      blendColor: 0xffffff,
     });
     const starMaterial3 = new THREE.PointsMaterial({
       color: 0xffffff,
       size: 2,
       sizeAttenuation: false,
+      blendColor: 0xffffff,
     });
 
     const starTexture = new THREE.TextureLoader().load("/textures/sun_big.png");
 
     const starMaterial4 = new THREE.PointsMaterial({
-      map: starTexture,
+      map: starTexture, // halo radial
       color: 0xffffff,
-      size: 4,
+      size: 6,
       transparent: true,
-      alphaTest: 0.5,
+      alphaTest: 0.01,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
       sizeAttenuation: true,
     });
 
