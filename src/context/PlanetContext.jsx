@@ -7,6 +7,16 @@ export const PlanetProvider = ({ children }) => {
   const [planetInfos, setPlanetInfos] = useState(null);
   const [planetObj, setPlanetObj] = useState(null);
   const [planetSize, setPlanetSize] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const generateNewPlanet = () => {
     const newPlanet = utils.generatePlanetInfos();
@@ -20,7 +30,13 @@ export const PlanetProvider = ({ children }) => {
 
   return (
     <PlanetContext.Provider
-      value={{ planetInfos, generateNewPlanet, planetSize, setPlanetSize }}
+      value={{
+        planetInfos,
+        generateNewPlanet,
+        planetSize,
+        setPlanetSize,
+        isMobile,
+      }}
     >
       {children}
     </PlanetContext.Provider>

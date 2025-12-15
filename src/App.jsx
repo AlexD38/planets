@@ -8,7 +8,7 @@ import "./App.css";
 
 export default function App() {
   const mountRef = useRef(null);
-  const { planetInfos, planetSize } = useContext(PlanetContext);
+  const { planetInfos, planetSize, isMobile } = useContext(PlanetContext);
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -199,17 +199,8 @@ export default function App() {
     };
     animate();
 
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-
-    window.addEventListener("resize", handleResize);
-
     // --- CLEANUP ---
     return () => {
-      window.removeEventListener("resize", handleResize);
       renderer.dispose();
       scene.clear();
     };
