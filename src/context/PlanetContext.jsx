@@ -8,6 +8,14 @@ export const PlanetProvider = ({ children }) => {
   const [planetObj, setPlanetObj] = useState(null);
   const [planetSize, setPlanetSize] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [scene, setScene] = useState(null);
+  const [stars1, setStars1] = useState(null);
+  const [stars2, setStars2] = useState(null);
+  const [stars3, setStars3] = useState(null);
+  const [stars4, setStars4] = useState(null);
+  const [stars5, setStars5] = useState(null);
+  const [camera, setCamera] = useState(null);
+  const [renderer, setRenderer] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,6 +44,24 @@ export const PlanetProvider = ({ children }) => {
         planetSize,
         setPlanetSize,
         isMobile,
+        scene,
+        setScene,
+        planetObj,
+        setPlanetObj,
+        stars1,
+        setStars1,
+        stars2,
+        setStars2,
+        stars3,
+        setStars3,
+        stars4,
+        setStars4,
+        stars5,
+        setStars5,
+        camera,
+        setCamera,
+        renderer,
+        setRenderer,
       }}
     >
       {children}
