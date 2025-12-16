@@ -1,10 +1,19 @@
 import { useContext, useEffect, useRef } from "react";
 import { PlanetContext } from "../context/PlanetContext";
 import * as THREE from "three";
+import { utils } from "../utils/utils";
 
 export const Stars = () => {
-  const { setStars1, setStars2, setStars3, setStars4, setStars5, scene } =
-    useContext(PlanetContext);
+  const {
+    setStars1,
+    setStars2,
+    setStars3,
+    setStars4,
+    setStars5,
+    setMoons,
+    setMoons6,
+    scene,
+  } = useContext(PlanetContext);
   const starsRef = useRef(null);
 
   useEffect(() => {
@@ -13,18 +22,24 @@ export const Stars = () => {
       const starCount = 6000;
       const starCount2 = 600;
       const starCount3 = 600;
-      const starCount4 = 60;
-      const starCount5 = 6;
+      const starCount4 = 15;
+      const starCount5 = 4;
+      const moonsCount5 = utils.randomBetween(0, 3);
+      const moonsCount6 = utils.randomBetween(0, 2);
       const starGeometry = new THREE.BufferGeometry();
       const starGeometry2 = new THREE.BufferGeometry();
       const starGeometry3 = new THREE.BufferGeometry();
       const starGeometry4 = new THREE.BufferGeometry();
       const starGeometry5 = new THREE.BufferGeometry();
+      const moonsGeometry5 = new THREE.BufferGeometry();
+      const moonsGeometry6 = new THREE.BufferGeometry();
       const starPositions = [];
       const starPositions2 = [];
       const starPositions3 = [];
       const starPositions4 = [];
       const starPositions5 = [];
+      const moonsPositions5 = [];
+      const moonsPositions6 = [];
 
       for (let i = 0; i < starCount; i++) {
         starPositions.push(
@@ -61,6 +76,22 @@ export const Stars = () => {
           (Math.random() - 0.5) * 1000
         );
       }
+      for (let i = 0; i < moonsCount5; i++) {
+        const angle = (i / moonsCount5) * Math.PI * 2; // Répartit les 4 étoiles
+        const radius = utils.randomBetween(15, 20); // Rayon de l'anneau
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = (Math.random() - 0.5) * 2; // Légère variation verticale
+        moonsPositions5.push(x, y, z);
+      }
+      for (let i = 0; i < moonsCount6; i++) {
+        const angle = (i / moonsCount6) * Math.PI * 2; // Répartit les 4 étoiles
+        const radius = utils.randomBetween(10, 30); // Rayon de l'anneau
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = (Math.random() - 0.5) * 2; // Légère variation verticale
+        moonsPositions6.push(x, y, z);
+      }
 
       starGeometry.setAttribute(
         "position",
@@ -83,6 +114,14 @@ export const Stars = () => {
       starGeometry5.setAttribute(
         "position",
         new THREE.Float32BufferAttribute(starPositions5, 3)
+      );
+      moonsGeometry5.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(moonsPositions5, 3)
+      );
+      moonsGeometry6.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(moonsPositions6, 3)
       );
 
       const starMaterial = new THREE.PointsMaterial({
@@ -107,6 +146,7 @@ export const Stars = () => {
       const starTexture = new THREE.TextureLoader().load(
         "/textures/sun_big.png"
       );
+      const moonTexture = new THREE.TextureLoader().load("/textures/sun.png");
 
       starTexture.flipY = false;
       starTexture.premultiplyAlpha = false;
@@ -126,7 +166,27 @@ export const Stars = () => {
       const starMaterial5 = new THREE.PointsMaterial({
         map: starTexture, // halo radial
         color: 0xffffff,
-        size: 8,
+        size: 6,
+        transparent: true,
+        alphaTest: 0.01,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true,
+      });
+      const moonsMaterial5 = new THREE.PointsMaterial({
+        map: moonTexture, // halo radial
+        color: 0xffffff,
+        size: utils.randomBetween(3, 8),
+        transparent: true,
+        alphaTest: 0.01,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true,
+      });
+      const moonsMaterial6 = new THREE.PointsMaterial({
+        map: moonTexture, // halo radial
+        color: 0xffffff,
+        size: utils.randomBetween(2, 10),
         transparent: true,
         alphaTest: 0.01,
         depthWrite: false,
@@ -140,15 +200,28 @@ export const Stars = () => {
       const stars3 = new THREE.Points(starGeometry3, starMaterial3);
       const stars4 = new THREE.Points(starGeometry4, starMaterial4);
       const stars5 = new THREE.Points(starGeometry5, starMaterial5);
+      const moons = new THREE.Points(moonsGeometry5, moonsMaterial5);
+      const moons6 = new THREE.Points(moonsGeometry6, moonsMaterial6);
 
       setStars1(stars);
       setStars2(stars2);
       setStars3(stars3);
       setStars4(stars4);
       setStars5(stars5);
+      setMoons(moons);
+      setMoons6(moons6);
 
-      scene.add(stars, stars2, stars3, stars4, stars5);
+      scene.add(stars, stars2, stars3, stars4, stars5, moons, moons6);
     }
-  }, [scene, setStars1, setStars2, setStars3, setStars4]);
+  }, [
+    scene,
+    setStars1,
+    setStars2,
+    setStars3,
+    setStars4,
+    setStars5,
+    setMoons,
+    setMoons6,
+  ]);
   return null;
 };

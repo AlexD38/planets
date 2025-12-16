@@ -20,12 +20,17 @@ export default function App() {
     stars4,
     stars5,
     camera,
+    moons,
+    moons6,
     setCamera,
     renderer,
     setRenderer,
   } = useContext(PlanetContext);
 
   const animationFrameId = useRef();
+  const moonRotationTilt = utils.randomBetween(-0.05, 0.05);
+  const moon6RotationTilt = utils.randomBetween(-0.05, 0.05);
+  const planetotationTilt = utils.randomBetween(-0.5, 0.5);
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -76,7 +81,7 @@ export default function App() {
 
     if (planetObj) {
       planetObj.rotation.y = time * 0.0001;
-      planetObj.rotation.x = Math.sin(time * 0.00005) * 0.05;
+      planetObj.rotation.x = planetotationTilt;
     }
 
     if (stars1) {
@@ -84,8 +89,18 @@ export default function App() {
     }
     if (stars2) stars2.rotation.y += 0.0001;
     if (stars3) stars3.rotation.y += 0.0001;
-    if (stars4) stars4.rotation.y += 0.0001;
-    if (stars5) stars5.rotation.y += 0.0001;
+    if (stars4) stars4.rotation.y += 0.0005;
+    if (stars5) {
+      stars5.rotation.y += -0.001;
+    }
+    if (moons) {
+      moons.rotation.y += 0.02;
+      moons.rotation.x = moonRotationTilt;
+    }
+    if (moons6) {
+      moons6.rotation.y += -0.004;
+      moons6.rotation.x = moon6RotationTilt;
+    }
 
     const t = Date.now() * 0.0002;
     const light = scene.children.find(
@@ -114,7 +129,7 @@ export default function App() {
       <PlanetInfos />
       {scene && (
         <>
-          <Planet />
+          <Planet name="planet" />
           <Stars />
           <Actions />
         </>
