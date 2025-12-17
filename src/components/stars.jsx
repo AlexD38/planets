@@ -24,8 +24,8 @@ export const Stars = () => {
       const starCount3 = 600;
       const starCount4 = 15;
       const starCount5 = 4;
-      const moonsCount5 = utils.randomBetween(0, 3);
-      const moonsCount6 = utils.randomBetween(0, 2);
+      const moonsCount5 = utils.randomBetween(0, 2);
+      const moonsCount6 = utils.randomBetween(0, 1);
       const starGeometry = new THREE.BufferGeometry();
       const starGeometry2 = new THREE.BufferGeometry();
       const starGeometry3 = new THREE.BufferGeometry();
@@ -78,7 +78,7 @@ export const Stars = () => {
       }
       for (let i = 0; i < moonsCount5; i++) {
         const angle = (i / moonsCount5) * Math.PI * 2; // Répartit les 4 étoiles
-        const radius = utils.randomBetween(15, 20); // Rayon de l'anneau
+        const radius = utils.randomBetween(1, 15); // Rayon de l'anneau
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
         const y = (Math.random() - 0.5) * 2; // Légère variation verticale
@@ -86,7 +86,7 @@ export const Stars = () => {
       }
       for (let i = 0; i < moonsCount6; i++) {
         const angle = (i / moonsCount6) * Math.PI * 2; // Répartit les 4 étoiles
-        const radius = utils.randomBetween(10, 30); // Rayon de l'anneau
+        const radius = utils.randomBetween(5, 20); // Rayon de l'anneau
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
         const y = (Math.random() - 0.5) * 2; // Légère variation verticale

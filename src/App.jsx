@@ -28,8 +28,8 @@ export default function App() {
   } = useContext(PlanetContext);
 
   const animationFrameId = useRef();
-  const moonRotationTilt = utils.randomBetween(-0.05, 0.05);
-  const moon6RotationTilt = utils.randomBetween(-0.05, 0.05);
+  const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
+  const moon6RotationTilt = utils.randomBetween(-0.5, 0.5);
   const planetotationTilt = utils.randomBetween(-0.5, 0.5);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function App() {
       0.1,
       1000
     );
-    camera.position.z = 20;
+    camera.position.z = 30;
     setCamera(camera);
 
     const renderer = new THREE.WebGLRenderer({
@@ -81,7 +81,9 @@ export default function App() {
 
     if (planetObj) {
       planetObj.rotation.y = time * 0.0001;
-      planetObj.rotation.x = planetotationTilt;
+      // planet.rotation.x += 0.01; // bascule
+      // planet.rotation.y += 0.01; // spin
+      // planet.rotation.z += 0.01; // roulis
     }
 
     if (stars1) {
@@ -90,16 +92,19 @@ export default function App() {
     if (stars2) stars2.rotation.y += 0.0001;
     if (stars3) stars3.rotation.y += 0.0001;
     if (stars4) stars4.rotation.y += 0.0005;
+
     if (stars5) {
       stars5.rotation.y += -0.001;
     }
     if (moons) {
-      moons.rotation.y += 0.02;
       moons.rotation.x = moonRotationTilt;
+      moons.rotation.y += 0.02;
+      moons.rotation.z = moonRotationTilt;
     }
     if (moons6) {
-      moons6.rotation.y += -0.004;
       moons6.rotation.x = moon6RotationTilt;
+      moons6.rotation.y += -0.04;
+      moons6.rotation.z = moon6RotationTilt;
     }
 
     const t = Date.now() * 0.0002;
