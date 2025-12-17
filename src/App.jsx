@@ -14,6 +14,7 @@ export default function App() {
     scene,
     setScene,
     planetObj,
+    planetObj2,
     stars1,
     stars2,
     stars3,
@@ -81,6 +82,10 @@ export default function App() {
 
     if (planetObj) {
       planetObj.rotation.y = time * 0.0001;
+      planetObj2.rotation.y += -0.02;
+      const orbitPivot = new THREE.Object3D();
+      scene.add(orbitPivot);
+      orbitPivot.add(planetObj2);
       // planet.rotation.x += 0.01; // bascule
       // planet.rotation.y += 0.01; // spin
       // planet.rotation.z += 0.01; // roulis
@@ -135,6 +140,14 @@ export default function App() {
       {scene && (
         <>
           <Planet name="planet" />
+          <Planet
+            name="planet2"
+            position={{
+              x: utils.randomBetween(-20, 20),
+              y: utils.randomBetween(-20, 20),
+              z: utils.randomBetween(-20, -20),
+            }}
+          />
           <Stars />
           <Actions />
         </>

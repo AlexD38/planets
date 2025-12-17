@@ -6,6 +6,7 @@ export const PlanetContext = createContext();
 export const PlanetProvider = ({ children }) => {
   const [planetInfos, setPlanetInfos] = useState(null);
   const [planetObj, setPlanetObj] = useState(null);
+  const [planetObj2, setPlanetObj2] = useState(null);
   const [planetSize, setPlanetSize] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [scene, setScene] = useState(null);
@@ -50,6 +51,8 @@ export const PlanetProvider = ({ children }) => {
         setScene,
         planetObj,
         setPlanetObj,
+        planetObj2,
+        setPlanetObj2,
         stars1,
         setStars1,
         stars2,

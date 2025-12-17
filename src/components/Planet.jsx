@@ -1,9 +1,11 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { PlanetContext } from "../context/PlanetContext";
 import * as THREE from "three";
+import { utils } from "../utils/utils";
 
-export const Planet = () => {
-  const { planetInfos, setPlanetObj, scene } = useContext(PlanetContext);
+export const Planet = ({ position, name }) => {
+  const { planetInfos, setPlanetObj, scene, planetObj2, setPlanetObj2 } =
+    useContext(PlanetContext);
   const [size, setSize] = useState(5);
   const planetRef = useRef(null);
 
@@ -39,17 +41,25 @@ export const Planet = () => {
         );
         const planetMaterial = new THREE.MeshStandardMaterial({
           map: nebTexture,
+          color: utils.getRandomHexColor(),
         });
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
         planetRef.current = planet;
-        setPlanetObj(planet);
+        if (position) {
+          planet.position.set(position.x, position.y, position.z);
+        }
+        if (name !== "planet") {
+          setPlanetObj2(planet);
+        } else {
+          setPlanetObj(planet);
+        }
         scene.add(planet);
       } else {
         planetRef.current.geometry.dispose();
         planetRef.current.geometry = new THREE.SphereGeometry(size, 64, 64);
       }
     }
-  }, [scene, size, setPlanetObj]);
+  }, [scene, size, setPlanetObj, setPlanetObj2]);
 
   return null;
 };
