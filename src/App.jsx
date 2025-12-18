@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useCallback } from "react";
+import { useContext, useEffect, useRef, useCallback, useState } from "react";
 import * as THREE from "three";
 import { PlanetInfos } from "./PlanetInfos";
 import { PlanetContext } from "./context/PlanetContext";
@@ -30,6 +30,7 @@ export default function App() {
   } = useContext(PlanetContext);
 
   const animationFrameId = useRef();
+  const [bgTexture, setBgTexture] = useState(null);
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
   const moon6RotationTilt = utils.randomBetween(-0.5, 0.5);
   const planetotationTilt = utils.randomBetween(-0.5, 0.5);
@@ -39,7 +40,15 @@ export default function App() {
     console.log("universe: ", universe);
     const scene = new THREE.Scene();
     setScene(scene);
-    scene.background = new THREE.Color(0x000000); // fond noir
+    const textureLoader = new THREE.TextureLoader();
+    const bg = textureLoader.load("/hd/stars.jpg");
+    setBgTexture(bg);
+    // scene.background = new THREE.TextureLoader(0x000000); // fond noir
+
+    bg.wrapS = THREE.RepeatWrapping;
+    bg.wrapT = THREE.RepeatWrapping;
+
+    scene.background = bg; // fond noir
 
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -58,13 +67,13 @@ export default function App() {
     setRenderer(renderer);
 
     // --- LUMIÈRES ---
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     const { x, y, z } = utils.getRandomLightPosition();
 
     directionalLight.position.set(x, y, z);
 
     scene.add(directionalLight);
-    scene.add(new THREE.AmbientLight(utils.getRandomHexColor()));
+    // scene.add(new THREE.AmbientLight(utils.getRandomHexColor()));
 
     // --- CLEANUP ---
     return () => {
@@ -122,6 +131,8 @@ export default function App() {
     if (light) {
       light.position.set(Math.cos(t) * 30, 10, Math.sin(t) * 30);
     }
+    bgTexture.offset.y += -0.00001; // vitesse verticale
+    bgTexture.offset.x += -0.00005; // optionnel
 
     renderer.render(scene, camera);
     animationFrameId.current = requestAnimationFrame(animate);
@@ -148,27 +159,9 @@ export default function App() {
               name={p.name}
               position={{ x: p.x, y: p.y, z: p.z }}
               rotation={p.rotation}
+              size={p.size}
             />
           ))}
-          {/* <Planet name="planet" rotation={utils.randomBetween(-0.001, 0.007)} />
-          <Planet
-            name="planet2"
-            position={{
-              x: utils.randomBetween(-20, 20),
-              y: utils.randomBetween(-20, 20),
-              z: utils.randomBetween(-20, -20),
-            }}
-            rotation={utils.randomBetween(-0.001, 0.005)}
-          />
-          <Planet
-            name="planet3"
-            position={{
-              x: utils.randomBetween(-20, 20),
-              y: utils.randomBetween(-20, 20),
-              z: utils.randomBetween(-20, -20),
-            }}
-            rotation={utils.randomBetween(-0.003, 0.005)}
-          /> */}
           <Stars />
           <Actions />
         </>

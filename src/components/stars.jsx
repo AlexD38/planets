@@ -21,9 +21,9 @@ export const Stars = () => {
       // --- ÉTOILES PROCÉDURALES ---
       const starCount = 6000;
       const starCount2 = 600;
-      const starCount3 = 600;
+      const starCount3 = 25;
       const starCount4 = 15;
-      const starCount5 = 4;
+      const starCount5 = 6;
       const moonsCount5 = utils.randomBetween(0, 2);
       const moonsCount6 = utils.randomBetween(0, 1);
       const starGeometry = new THREE.BufferGeometry();
@@ -211,7 +211,7 @@ export const Stars = () => {
       setMoons(moons);
       setMoons6(moons6);
 
-      scene.add(stars, stars2, stars3, stars4, stars5, moons, moons6);
+      scene.add(/*stars, stars2, */ stars3, stars4, stars5, moons, moons6);
     }
   }, [
     scene,
