@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { utils } from "../utils/utils";
 import { texturesArr } from "../config/config";
 
-export const Planet = ({ position, name, rotation, size }) => {
+export const Planet = ({ position, name, rotation, size, texture }) => {
   const {
     planetInfos,
     setPlanetObj,
@@ -26,12 +26,10 @@ export const Planet = ({ position, name, rotation, size }) => {
         const planetGeometry = new THREE.SphereGeometry(size, 64, 64);
         const textureLoader = new THREE.TextureLoader();
 
-        const textureToLoad = utils.getRandomElement(texturesArr);
-
-        const nebTexture = textureLoader.load(`/hd/${textureToLoad}.jpg`);
+        const nebTexture = textureLoader.load(`/hd/${texture}.jpg`);
         const planetMaterial = new THREE.MeshStandardMaterial({
           map: nebTexture,
-          color: 0xffffff,
+          color: utils.getRandomHexColor(),
         });
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
         planetRef.current = planet;
@@ -58,16 +56,11 @@ export const Planet = ({ position, name, rotation, size }) => {
 
     const time = Date.now();
 
-    if (planet) {
-      planet.rotation.y = time * rotation;
-      const orbitPivot = new THREE.Object3D();
-      scene.add(orbitPivot);
-      orbitPivot.add(planetObj2);
-      planetObj2.rotation.y += -0.02;
-      // planet.rotation.x += 0.01; // bascule
-      // planet.rotation.y += 0.01; // spin
-      // planet.rotation.z += 0.01; // roulis
-    }
+    // planetRef.current.rotation.y = time * rotation;
+    planetRef.current.rotation.y += rotation;
+    // planet.rotation.x += 0.01; // bascule
+    // planet.rotation.y += 0.01; // spin
+    // planet.rotation.z += 0.01; // roulis
 
     renderer.render(scene, camera);
     animationFrameId.current = requestAnimationFrame(animate);

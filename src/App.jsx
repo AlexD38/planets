@@ -7,7 +7,6 @@ import { utils } from "./utils/utils";
 import "./App.css";
 import { Planet } from "./components/Planet";
 import { Stars } from "./components/stars";
-import { universe } from "./config/universe";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -27,17 +26,17 @@ export default function App() {
     setCamera,
     renderer,
     setRenderer,
+    universe,
   } = useContext(PlanetContext);
 
   const animationFrameId = useRef();
+  console.log("universe: ", universe);
   const [bgTexture, setBgTexture] = useState(null);
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
   const moon6RotationTilt = utils.randomBetween(-0.5, 0.5);
   const planetotationTilt = utils.randomBetween(-0.5, 0.5);
 
   useEffect(() => {
-    universe;
-    console.log("universe: ", universe);
     const scene = new THREE.Scene();
     setScene(scene);
     const textureLoader = new THREE.TextureLoader();
@@ -129,7 +128,7 @@ export default function App() {
       (child) => child instanceof THREE.DirectionalLight
     );
     if (light) {
-      light.position.set(Math.cos(t) * 30, 10, Math.sin(t) * 30);
+      // light.position.set(Math.cos(t) * 30, 10, Math.sin(t) * 30);
     }
     bgTexture.offset.y += -0.00001; // vitesse verticale
     bgTexture.offset.x += -0.00005; // optionnel
@@ -153,15 +152,25 @@ export default function App() {
       <PlanetInfos />
       {scene && (
         <>
-          {universe.map((p) => (
-            <Planet
-              key={p.name}
-              name={p.name}
-              position={{ x: p.x, y: p.y, z: p.z }}
-              rotation={p.rotation}
-              size={p.size}
-            />
-          ))}
+          {universe &&
+            universe.map((p) => (
+              <Planet
+                key={p.name}
+                name={p.name}
+                position={{ x: p.x, y: p.y, z: p.z }}
+                rotation={p.rotation}
+                size={p.size}
+                texture={p.texture}
+              />
+            ))}
+          <Planet
+            key={planetObj?.name}
+            name={planetObj?.name}
+            position={{ x: 0, y: 0, z: 0 }}
+            rotation={-0.001}
+            size={4}
+            texture={"sun"}
+          />
           <Stars />
           <Actions />
         </>

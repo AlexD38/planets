@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import { utils } from "../utils/utils";
+import { texturesArr } from "../config/config";
 
 export const PlanetContext = createContext();
 
@@ -19,8 +20,25 @@ export const PlanetProvider = ({ children }) => {
   const [moons6, setMoons6] = useState(null);
   const [camera, setCamera] = useState(null);
   const [renderer, setRenderer] = useState(null);
+  const [universe, setUniverse] = useState(null);
 
   useEffect(() => {
+    const planetsToGenerate = utils.randomBetween(0, 3);
+    const generatedUniverse = [];
+    for (let index = 0; index < planetsToGenerate; index++) {
+      const planetSettings = {
+        name: utils.generatePlanetInfos()?.name,
+        rotation: utils.randomBetween(-0.005, 0.005),
+        x: utils.randomBetween(-20, 20),
+        y: utils.randomBetween(-0, 0),
+        z: utils.randomBetween(-20, 20),
+        size: utils.randomBetween(2, 6),
+        texture: utils.getRandomElement(texturesArr),
+      };
+      generatedUniverse.push(planetSettings);
+    }
+    setUniverse(generatedUniverse);
+
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -71,6 +89,7 @@ export const PlanetProvider = ({ children }) => {
         setMoons,
         moons6,
         setMoons6,
+        universe,
       }}
     >
       {children}

@@ -49,7 +49,6 @@ export const utils = {
     return { x, y, z };
   },
   randomBetween(min, max) {
-    const result = Math.floor(Math.random() * (max - min + 1)) + min;
-    return result;
+    return +(Math.random() * (max - min) + min).toFixed(3);
   },
 };

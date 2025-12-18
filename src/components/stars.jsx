@@ -23,7 +23,7 @@ export const Stars = () => {
       const starCount2 = 600;
       const starCount3 = 25;
       const starCount4 = 15;
-      const starCount5 = 6;
+      const starCount5 = 20;
       const moonsCount5 = utils.randomBetween(0, 2);
       const moonsCount6 = utils.randomBetween(0, 1);
       const starGeometry = new THREE.BufferGeometry();
