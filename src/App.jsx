@@ -7,6 +7,7 @@ import { utils } from "./utils/utils";
 import "./App.css";
 import { Planet } from "./components/Planet";
 import { Stars } from "./components/stars";
+import { universe } from "./config/universe";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -34,6 +35,8 @@ export default function App() {
   const planetotationTilt = utils.randomBetween(-0.5, 0.5);
 
   useEffect(() => {
+    universe;
+    console.log("universe: ", universe);
     const scene = new THREE.Scene();
     setScene(scene);
     scene.background = new THREE.Color(0x000000); // fond noir
@@ -139,7 +142,15 @@ export default function App() {
       <PlanetInfos />
       {scene && (
         <>
-          <Planet name="planet" rotation={utils.randomBetween(-0.001, 0.007)} />
+          {universe.map((p) => (
+            <Planet
+              key={p.name}
+              name={p.name}
+              position={{ x: p.x, y: p.y, z: p.z }}
+              rotation={p.rotation}
+            />
+          ))}
+          {/* <Planet name="planet" rotation={utils.randomBetween(-0.001, 0.007)} />
           <Planet
             name="planet2"
             position={{
@@ -157,7 +168,7 @@ export default function App() {
               z: utils.randomBetween(-20, -20),
             }}
             rotation={utils.randomBetween(-0.003, 0.005)}
-          />
+          /> */}
           <Stars />
           <Actions />
         </>
