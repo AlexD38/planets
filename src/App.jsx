@@ -80,16 +80,16 @@ export default function App() {
 
     const time = Date.now();
 
-    if (planetObj) {
-      planetObj.rotation.y = time * 0.0001;
-      planetObj2.rotation.y += -0.02;
-      const orbitPivot = new THREE.Object3D();
-      scene.add(orbitPivot);
-      orbitPivot.add(planetObj2);
-      // planet.rotation.x += 0.01; // bascule
-      // planet.rotation.y += 0.01; // spin
-      // planet.rotation.z += 0.01; // roulis
-    }
+    // if (planetObj) {
+    //   planetObj.rotation.y = time * 0.0001;
+    //   const orbitPivot = new THREE.Object3D();
+    //   scene.add(orbitPivot);
+    //   orbitPivot.add(planetObj2);
+    //   planetObj2.rotation.y += -0.02;
+    //   // planet.rotation.x += 0.01; // bascule
+    //   // planet.rotation.y += 0.01; // spin
+    //   // planet.rotation.z += 0.01; // roulis
+    // }
 
     if (stars1) {
       stars1.rotation.y += 0.0001;
@@ -139,7 +139,7 @@ export default function App() {
       <PlanetInfos />
       {scene && (
         <>
-          <Planet name="planet" />
+          <Planet name="planet" rotation={utils.randomBetween(-0.001, 0.007)} />
           <Planet
             name="planet2"
             position={{
@@ -147,6 +147,16 @@ export default function App() {
               y: utils.randomBetween(-20, 20),
               z: utils.randomBetween(-20, -20),
             }}
+            rotation={utils.randomBetween(-0.001, 0.005)}
+          />
+          <Planet
+            name="planet3"
+            position={{
+              x: utils.randomBetween(-20, 20),
+              y: utils.randomBetween(-20, 20),
+              z: utils.randomBetween(-20, -20),
+            }}
+            rotation={utils.randomBetween(-0.003, 0.005)}
           />
           <Stars />
           <Actions />
