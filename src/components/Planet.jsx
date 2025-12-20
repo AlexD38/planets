@@ -58,18 +58,17 @@ export const Planet = ({
     }
   }, [scene, size, setPlanetObj, setPlanetObj2]);
   function updateOrbit(mesh, orbit, delta) {
-    orbit.angle += orbit.speed * delta;
+    if (orbit?.angle) orbit.angle += orbit.speed * delta;
 
-    const x = orbit.radius * Math.cos(orbit.angle);
-    const z = orbit.radius * Math.sin(orbit.angle);
-
-    mesh.position.set(x, 0, z);
-
-    // rotation propre de la planète
-    mesh.rotation.y += rotation;
-
-    // inclinaison du plan orbital (optionnelle)
-    mesh.rotation.z = orbit.inclination;
+    if (orbit?.radius) {
+      const x = orbit.radius * Math.cos(orbit.angle);
+      const z = orbit.radius * Math.sin(orbit.angle);
+      mesh.position.set(x, 0, z);
+      // rotation propre de la planète
+      mesh.rotation.y += rotation;
+      // inclinaison du plan orbital (optionnelle)
+      mesh.rotation.z = orbit.inclination;
+    }
   }
   const animate = useCallback(() => {
     if (!renderer || !scene || !camera) {

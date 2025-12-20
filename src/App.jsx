@@ -75,11 +75,23 @@ export default function App() {
     // --- BACKGROUND ---
     scene.background = new THREE.Color(0x000000);
 
-    // --- LIGHT ---
+    // // --- LIGHT ---
     const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     const { x, y, z } = utils.getRandomLightPosition();
-    directionalLight.position.set(x, y, z);
+    directionalLight.position.set(x, 0, z);
     scene.add(directionalLight);
+
+    // Lumière locale
+    // const sunLight = new THREE.PointLight(0xffffff, 2, 0);
+    // sunLight.position.set(100, 0, 100);
+    // scene.add(sunLight);
+
+    // Lumière parallèle (ombres et relief)
+    // const dirLight = new THREE.DirectionalLight(0xffffff, 5, 200);
+    // dirLight.position.set(0, 0, 0);
+    // dirLight.target.position.set(0, 0, 50); // vers +Z
+    // scene.add(dirLight);
+    // scene.add(dirLight.target);
 
     // --- MOUSE ---
     const onMouseMove = (e) => {
