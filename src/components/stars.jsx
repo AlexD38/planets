@@ -12,7 +12,9 @@ export const Stars = () => {
     setStars5,
     setMoons,
     setMoons6,
+    setStarsNeb,
     scene,
+    camera,
   } = useContext(PlanetContext);
   const starsRef = useRef(null);
 
@@ -24,6 +26,7 @@ export const Stars = () => {
       const starCount3 = 25;
       const starCount4 = 15;
       const starCount5 = 20;
+      const starCountNeb = 100;
       const moonsCount5 = utils.randomBetween(0, 2);
       const moonsCount6 = utils.randomBetween(0, 1);
       const starGeometry = new THREE.BufferGeometry();
@@ -31,6 +34,7 @@ export const Stars = () => {
       const starGeometry3 = new THREE.BufferGeometry();
       const starGeometry4 = new THREE.BufferGeometry();
       const starGeometry5 = new THREE.BufferGeometry();
+      const starGeometryNeb = new THREE.BufferGeometry();
       const moonsGeometry5 = new THREE.BufferGeometry();
       const moonsGeometry6 = new THREE.BufferGeometry();
       const starPositions = [];
@@ -38,6 +42,8 @@ export const Stars = () => {
       const starPositions3 = [];
       const starPositions4 = [];
       const starPositions5 = [];
+      const starPositionsNeb = [];
+      const starSpriteIndices = [];
       const moonsPositions5 = [];
       const moonsPositions6 = [];
 
@@ -75,6 +81,14 @@ export const Stars = () => {
           (Math.random() - 0.5) * 1000,
           (Math.random() - 0.5) * 1000
         );
+      }
+      for (let i = 0; i < starCountNeb; i++) {
+        starPositionsNeb.push(
+          (Math.random() - 0.5) * 1000,
+          (Math.random() - 0.5) * 1000,
+          (Math.random() - 0.5) * 1000
+        );
+        starSpriteIndices.push(Math.floor(Math.random() * 16)); // Add random index
       }
       for (let i = 0; i < moonsCount5; i++) {
         const angle = (i / moonsCount5) * Math.PI * 2; // Répartit les 4 étoiles
@@ -115,6 +129,14 @@ export const Stars = () => {
         "position",
         new THREE.Float32BufferAttribute(starPositions5, 3)
       );
+      starGeometryNeb.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(starPositionsNeb, 3)
+      );
+      starGeometryNeb.setAttribute(
+        "spriteIndex",
+        new THREE.Float32BufferAttribute(starSpriteIndices, 1)
+      );
       moonsGeometry5.setAttribute(
         "position",
         new THREE.Float32BufferAttribute(moonsPositions5, 3)
@@ -147,10 +169,12 @@ export const Stars = () => {
         "/textures/sun_big.png"
       );
       const moonTexture = new THREE.TextureLoader().load("/textures/sun.png");
+      const nebTexture = new THREE.TextureLoader().load("/textures/neb.jpg");
 
       starTexture.flipY = false;
       starTexture.premultiplyAlpha = false;
       starTexture.colorSpace = THREE.SRGBColorSpace;
+      nebTexture.flipY = false;
 
       const starMaterial4 = new THREE.PointsMaterial({
         map: starTexture, // halo radial
@@ -172,6 +196,48 @@ export const Stars = () => {
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         sizeAttenuation: true,
+      });
+      const starMaterialNeb = new THREE.ShaderMaterial({
+        uniforms: {
+          u_texture: { value: nebTexture },
+          u_color: { value: new THREE.Color(utils.getRandomHexColor()) }, // couleur que tu veux
+          size: { value: 600.0 },
+        },
+        vertexShader: `
+            attribute float spriteIndex;
+            varying float vSpriteIndex;
+            uniform float size;
+
+            void main() {
+                vSpriteIndex = spriteIndex;
+                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                gl_Position = projectionMatrix * mvPosition;
+                gl_PointSize = size;
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D u_texture;
+            uniform vec3 u_color; // ajoute cette uniform
+            varying float vSpriteIndex;
+
+            void main() {
+                float numSprites = 4.0; // 4x4 grid
+
+                float col = mod(vSpriteIndex, numSprites);
+                float row = floor(vSpriteIndex / numSprites);
+
+                vec2 uv = gl_PointCoord;
+                uv.x = (uv.x + col) / numSprites;
+                uv.y = (uv.y + row) / numSprites;
+
+                gl_FragColor = texture2D(u_texture, uv) * vec4(u_color, 1.0) * 0.2;
+            }
+        `,
+        transparent: true,
+        alphaTest: 0.01,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        // sizeAttenuation: true,
       });
       const moonsMaterial5 = new THREE.PointsMaterial({
         map: moonTexture, // halo radial
@@ -200,6 +266,7 @@ export const Stars = () => {
       const stars3 = new THREE.Points(starGeometry3, starMaterial3);
       const stars4 = new THREE.Points(starGeometry4, starMaterial4);
       const stars5 = new THREE.Points(starGeometry5, starMaterial5);
+      const starsNeb = new THREE.Points(starGeometryNeb, starMaterialNeb);
       const moons = new THREE.Points(moonsGeometry5, moonsMaterial5);
       const moons6 = new THREE.Points(moonsGeometry6, moonsMaterial6);
 
@@ -208,10 +275,11 @@ export const Stars = () => {
       setStars3(stars3);
       setStars4(stars4);
       setStars5(stars5);
+      setStarsNeb(starsNeb);
       setMoons(moons);
       setMoons6(moons6);
 
-      scene.add(stars, stars2, stars3, stars4, stars5, moons, moons6);
+      scene.add(stars, stars2, stars3, stars4, stars5, moons, moons6, starsNeb);
     }
   }, [
     scene,
@@ -222,6 +290,7 @@ export const Stars = () => {
     setStars5,
     setMoons,
     setMoons6,
+    setStarsNeb,
   ]);
   return null;
 };

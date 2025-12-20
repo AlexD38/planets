@@ -19,6 +19,7 @@ export const PlanetProvider = ({ children }) => {
   const [stars5, setStars5] = useState(null);
   const [moons, setMoons] = useState(null);
   const [moons6, setMoons6] = useState(null);
+  const [starsNeb, setStarsNeb] = useState(null);
   const [camera, setCamera] = useState(null);
   const [renderer, setRenderer] = useState(null);
   const [universe, setUniverse] = useState(null);
@@ -128,6 +129,8 @@ export const PlanetProvider = ({ children }) => {
         setMoons,
         moons6,
         setMoons6,
+        starsNeb,
+        setStarsNeb,
         universe,
         systemInfos,
       }}

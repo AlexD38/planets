@@ -33,8 +33,6 @@ export default function App() {
     universe,
   } = useContext(PlanetContext);
 
-  const [bgTexture, setBgTexture] = useState(null);
-
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
   const moon6RotationTilt = utils.randomBetween(-0.5, 0.5);
 
@@ -50,9 +48,9 @@ export default function App() {
       75,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000
+      15000
     );
-    camera.position.z = 80;
+    camera.position.z = 40;
     setCamera(camera);
 
     // --- RENDERER ---
@@ -74,12 +72,6 @@ export default function App() {
 
     // --- BACKGROUND ---
     scene.background = new THREE.Color(0x000000);
-
-    // // --- LIGHT ---
-    // const directionalLight = new THREE.DirectionalLight(0xffffff, 2, 0);
-    // const { x, y, z } = utils.getRandomLightPosition();
-    // directionalLight.position.set(x, 0, z);
-    // scene.add(directionalLight);
 
     // --- LIGHT ---
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
@@ -134,11 +126,6 @@ export default function App() {
       moons6.rotation.z = moon6RotationTilt;
     }
 
-    // --- BACKGROUND PARALLAX (LIÉ À LA CAMÉRA) ---
-    if (bgTexture) {
-      bgTexture.offset.x = camera.position.x * 0.002;
-      bgTexture.offset.y = camera.position.y * 0.002;
-    }
     // const idleStrength = 0.5; // → très subtil
     const idleStrength = 3.5; //→ plus expressif
     const idleLerp = 0.01; // → cinématique
@@ -164,7 +151,6 @@ export default function App() {
     stars5,
     moons,
     moons6,
-    bgTexture,
   ]);
 
   useEffect(() => {
