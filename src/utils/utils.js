@@ -74,6 +74,16 @@ export const utils = {
       } of this system is inhabited by intelligent life form`,
     };
 
+    const randomCommentsNeeded = utils.randomBetween(1, 3);
+    const randomComments = new Set();
+
+    for (let index = 0; index < randomCommentsNeeded; index++) {
+      const randomComment = utils.getRandomElement(configPlanetInfos.comments);
+      randomComments.add(randomComment);
+    }
+
+    analyze.comments = Array.from(randomComments);
+
     if (!analyze.lifeDetected) {
       delete analyze.infos;
     }

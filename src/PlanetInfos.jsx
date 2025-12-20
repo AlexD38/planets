@@ -122,6 +122,12 @@ export const PlanetInfos = () => {
             <div className="planet-infos-type">
               Types : {systemInfos.planetTypes.join(", ")}
             </div>
+            <div className="planet-infos-cabronDetected">
+              {planetInfos.cabronDetected
+                ? "Carbon detected"
+                : "No Carbon detected"}
+            </div>
+            <br></br>
             <div className="planet-infos-gravity">
               Life detected : {systemInfos.lifeDetected ? "yes" : "none"}
             </div>
@@ -130,11 +136,9 @@ export const PlanetInfos = () => {
             <br></br>
             <div className="planet-infos-comments">Comments : </div>
             <div className="planet-infos-inhabited">{systemInfos.infos}</div>
-            <div className="planet-infos-cabronDetected">
-              {planetInfos.cabronDetected
-                ? "Carbon detected"
-                : "No Carbon detected"}
-            </div>
+            {systemInfos.comments.map((x) => (
+              <div className="planet-infos-cabronDetected">{x}</div>
+            ))}
           </div>
         </>
       )}

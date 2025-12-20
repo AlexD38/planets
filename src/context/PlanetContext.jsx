@@ -14,6 +14,7 @@ export const PlanetProvider = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [scene, setScene] = useState(null);
   const [stars1, setStars1] = useState(null);
+  const [sun, setSun] = useState(null);
   const [stars2, setStars2] = useState(null);
   const [stars3, setStars3] = useState(null);
   const [stars4, setStars4] = useState(null);
@@ -76,6 +77,7 @@ export const PlanetProvider = ({ children }) => {
 
       generatedUniverse.push(planetSettings);
     }
+
     const howManyNeedRing = utils.randomBetween(
       0,
       generatedUniverse.length / 2
@@ -146,6 +148,8 @@ export const PlanetProvider = ({ children }) => {
         systemInfos,
         planetInfosDisplay,
         setPlanetInfosDisplay,
+        sun,
+        setSun,
       }}
     >
       {children}

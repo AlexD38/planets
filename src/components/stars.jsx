@@ -14,7 +14,7 @@ export const Stars = () => {
     setMoons6,
     setStarsNeb,
     scene,
-    camera,
+    setSun,
   } = useContext(PlanetContext);
   const starsRef = useRef(null);
 
@@ -22,6 +22,7 @@ export const Stars = () => {
     if (scene && !starsRef.current) {
       // --- ÉTOILES PROCÉDURALES ---
       const starCount = 6000;
+      const sunCount = 1;
       const starCount2 = 600;
       const starCount3 = 25;
       const starCount4 = 15;
@@ -54,6 +55,7 @@ export const Stars = () => {
           (Math.random() - 0.5) * 1000
         );
       }
+
       for (let i = 0; i < starCount2; i++) {
         starPositions2.push(
           (Math.random() - 0.5) * 1000,
@@ -197,6 +199,7 @@ export const Stars = () => {
         blending: THREE.AdditiveBlending,
         sizeAttenuation: true,
       });
+
       const starMaterialNeb = new THREE.ShaderMaterial({
         uniforms: {
           u_texture: { value: nebTexture },
