@@ -178,6 +178,7 @@ export default function App() {
               texture={p.texture}
               color={p.color}
               orbit={p.orbit}
+              hasRing={p.hasRing}
             />
           ))}
 

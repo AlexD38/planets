@@ -12,6 +12,7 @@ export const Planet = ({
   texture,
   color,
   orbit,
+  hasRing,
 }) => {
   const {
     planetInfos,
@@ -26,6 +27,7 @@ export const Planet = ({
   const animationFrameId = useRef();
 
   const planetRef = useRef(null);
+  const ringGroupRef = useRef(null);
   const [planet, setPlanet] = useState(null);
 
   useEffect(() => {
@@ -46,6 +48,38 @@ export const Planet = ({
         }
         const planetMaterial = new THREE.MeshStandardMaterial(options);
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+
+        if (hasRing) {
+          const dodecahedronGroup = new THREE.Group();
+
+          for (let i = 0; i < 500; i++) {
+            const dodecahedronGeometry = new THREE.DodecahedronGeometry(
+              utils.randomBetween(0.01, 0.09),
+              0
+            );
+            const dodecahedronMaterial = new THREE.MeshStandardMaterial({
+              color: 0xffffff,
+              metalness: 0.8,
+              roughness: 1,
+            });
+            const dodecahedron = new THREE.Mesh(
+              dodecahedronGeometry,
+              dodecahedronMaterial
+            );
+
+            const angle = (i / 500) * Math.PI * 2;
+            const radius = size + 0.5 + Math.random() * 2;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = (Math.random() - 0.5) * 0.2; // small random height
+
+            dodecahedron.position.set(x, y, z);
+            dodecahedronGroup.add(dodecahedron);
+          }
+          dodecahedronGroup.rotation.y = 1.7; // Tilt the whole group
+          ringGroupRef.current = dodecahedronGroup;
+          planet.add(dodecahedronGroup);
+        }
         planetRef.current = planet;
         if (position) {
           planet.position.set(position.x, position.y, position.z);
@@ -79,6 +113,10 @@ export const Planet = ({
   const animate = useCallback(() => {
     if (!renderer || !scene || !camera) {
       return;
+    }
+
+    if (ringGroupRef.current) {
+      ringGroupRef.current.rotation.y += utils.randomBetween(0.001, 0.005);
     }
 
     const time = Date.now();

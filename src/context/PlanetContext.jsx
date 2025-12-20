@@ -26,7 +26,7 @@ export const PlanetProvider = ({ children }) => {
   const [systemInfos, setSystemInfos] = useState(null);
 
   useEffect(() => {
-    // const needCustomColor = Date.now().toLocaleString().at(-1) % 2;
+    const randomTruFalse = Date.now().toLocaleString().at(-1) % 2;
     const needCustomColor = null;
     const planetsToGenerate = +utils.randomBetween(2, 5).toFixed(0);
     const generatedUniverse = [];
@@ -37,9 +37,11 @@ export const PlanetProvider = ({ children }) => {
     const MAX_SPEED = 0.006; // vitesse max (orbite interne)
     const MIN_SPEED = 0.0001; // vitesse min (orbite externe)
 
+    let canHaveRing = true;
+
     for (let index = 0; index < planetsToGenerate; index++) {
-      const generatedPlanet = utils.generatePlanetInfos();
       const size = utils.randomBetween(0.5, 4);
+      const texture = utils.getRandomElement(texturesArr);
 
       const orbitRadius = BASE_RADIUS + index * ORBIT_GAP;
       const angle = Math.random() * Math.PI * 2;
@@ -49,6 +51,7 @@ export const PlanetProvider = ({ children }) => {
 
       // interpolation inverse : proche = rapide, loin = lent
       const speed = THREE.MathUtils.lerp(MAX_SPEED, MIN_SPEED, t);
+      const generatedPlanet = utils.generatePlanetInfos();
 
       const planetSettings = {
         name: generatedPlanet?.name,
@@ -61,7 +64,7 @@ export const PlanetProvider = ({ children }) => {
         z: orbitRadius * Math.sin(angle),
 
         size,
-        texture: utils.getRandomElement(texturesArr),
+        texture: texture,
         color: needCustomColor ? utils.getRandomHexColor() : 0xffffff,
 
         orbit: {
@@ -71,6 +74,11 @@ export const PlanetProvider = ({ children }) => {
           inclination: utils.randomBetween(-0.2, 0.2),
         },
       };
+
+      if (randomTruFalse && canHaveRing) {
+        planetSettings.hasRing = true;
+        canHaveRing = false;
+      }
 
       generatedUniverse.push(planetSettings);
     }
