@@ -76,15 +76,20 @@ export default function App() {
     scene.background = new THREE.Color(0x000000);
 
     // // --- LIGHT ---
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    const { x, y, z } = utils.getRandomLightPosition();
-    directionalLight.position.set(x, 0, z);
-    scene.add(directionalLight);
+    // const directionalLight = new THREE.DirectionalLight(0xffffff, 2, 0);
+    // const { x, y, z } = utils.getRandomLightPosition();
+    // directionalLight.position.set(x, 0, z);
+    // scene.add(directionalLight);
 
-    // Lumière locale
-    // const sunLight = new THREE.PointLight(0xffffff, 2, 0);
-    // sunLight.position.set(100, 0, 100);
-    // scene.add(sunLight);
+    // --- LIGHT ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+    directionalLight.position.set(0, 0, 0);
+    directionalLight.target.position.set(0, 0, 0);
+    scene.add(directionalLight);
+    scene.add(directionalLight.target);
 
     // Lumière parallèle (ombres et relief)
     // const dirLight = new THREE.DirectionalLight(0xffffff, 5, 200);

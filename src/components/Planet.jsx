@@ -90,7 +90,7 @@ export const Planet = ({
     // planet.rotation.y += 0.01; // spin
     // planet.rotation.z += 0.01; // roulis
 
-    renderer.render(scene, camera);
+    // renderer.render(scene, camera);
     animationFrameId.current = requestAnimationFrame(animate);
   }, [renderer, scene, camera, planetObj]);
   useEffect(() => {
