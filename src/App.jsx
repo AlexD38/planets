@@ -85,18 +85,10 @@ export default function App() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
-    directionalLight.position.set(0, 0, 0);
-    directionalLight.target.position.set(0, 0, 0);
-    scene.add(directionalLight);
-    scene.add(directionalLight.target);
-
-    // Lumière parallèle (ombres et relief)
-    // const dirLight = new THREE.DirectionalLight(0xffffff, 5, 200);
-    // dirLight.position.set(0, 0, 0);
-    // dirLight.target.position.set(0, 0, 50); // vers +Z
-    // scene.add(dirLight);
-    // scene.add(dirLight.target);
+    // Lumière rouge au centre
+    const light = new THREE.PointLight(0xffffff, 5000, 0);
+    light.position.set(0, 0, 0);
+    scene.add(light);
 
     // --- MOUSE ---
     const onMouseMove = (e) => {
@@ -207,7 +199,7 @@ export default function App() {
             name="sun"
             position={{ x: 0, y: 0, z: 0 }}
             rotation={-0.001}
-            size={10}
+            size={5}
             texture="sun"
           />
 
