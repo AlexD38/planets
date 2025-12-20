@@ -10,6 +10,7 @@ export const PlanetProvider = ({ children }) => {
   const [planetObj, setPlanetObj] = useState(null);
   const [planetObj2, setPlanetObj2] = useState(null);
   const [planetSize, setPlanetSize] = useState(null);
+  const [planetInfosDisplay, setPlanetInfosDisplay] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [scene, setScene] = useState(null);
   const [stars1, setStars1] = useState(null);
@@ -141,6 +142,8 @@ export const PlanetProvider = ({ children }) => {
         setStarsNeb,
         universe,
         systemInfos,
+        planetInfosDisplay,
+        setPlanetInfosDisplay,
       }}
     >
       {children}

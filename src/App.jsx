@@ -8,6 +8,7 @@ import "./App.css";
 import { Planet } from "./components/Planet";
 import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { Parameters } from "./components/Parameters";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -31,6 +32,7 @@ export default function App() {
     renderer,
     setRenderer,
     universe,
+    planetInfosDisplay,
   } = useContext(PlanetContext);
 
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
@@ -164,7 +166,8 @@ export default function App() {
   return (
     <>
       <canvas ref={mountRef} className="three-canvas" />
-      <PlanetInfos />
+      <Parameters />
+      {planetInfosDisplay && <PlanetInfos />}
 
       {scene && (
         <>

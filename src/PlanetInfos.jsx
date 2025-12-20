@@ -115,6 +115,9 @@ export const PlanetInfos = () => {
             />
             <div className="planet-infos-infos">Infos :</div>
             <div className="planet-infos-name">Name : "{systemInfos.name}"</div>
+            <div className="planet-infos-name">
+              {systemInfos.numberOfPlanets} planets detected
+            </div>
 
             <div className="planet-infos-type">
               Types : {systemInfos.planetTypes.join(", ")}
