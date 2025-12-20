@@ -31,7 +31,7 @@ export const PlanetInfos = () => {
     if (e.key == "n") {
       typewriterInstanceRef.current
         .deleteAll(1)
-        .typeString("Planet name : ")
+        .typeString("System name : ")
         .pauseFor(500)
         .typeString(`${planetInfos.name}.`)
         .start();
@@ -64,7 +64,7 @@ export const PlanetInfos = () => {
     typewriterInstanceRef.current = typewriter;
 
     typewriter
-      .typeString("Scanning planet")
+      .typeString("Scanning System")
       .pauseFor(200)
       .typeString(".")
       .pauseFor(200)
@@ -75,7 +75,7 @@ export const PlanetInfos = () => {
       .typeString("Data acquired.")
       .pauseFor(500)
       .typeString("<br>")
-      .typeString("Planet name : ")
+      .typeString("System name : ")
       .pauseFor(500)
       .typeString(`${planetInfos.name}.`)
       .pauseFor(1000)
@@ -87,7 +87,7 @@ export const PlanetInfos = () => {
       typewriter
         .typeString("<br>")
         .typeString("<br>")
-        .typeString("Display planet infos ? [y, n]");
+        .typeString("Display system infos ? [y, n]");
     } else {
       setTimeout(() => {
         handleUserChoice({ key: "y" });

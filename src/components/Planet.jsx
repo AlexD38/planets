@@ -35,10 +35,16 @@ export const Planet = ({
         const textureLoader = new THREE.TextureLoader();
 
         const nebTexture = textureLoader.load(`/hd/${texture}.jpg`);
-        const planetMaterial = new THREE.MeshStandardMaterial({
+        const options = {
           map: nebTexture,
           color: color || 0xffffff,
-        });
+        };
+        if (name == "sun") {
+          options.emissive = 0xffffaa; // couleur lumineuse
+          options.emissiveMap = nebTexture; // couleur lumineuse
+          options.emissiveIntensity = 2;
+        }
+        const planetMaterial = new THREE.MeshStandardMaterial(options);
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
         planetRef.current = planet;
         if (position) {
