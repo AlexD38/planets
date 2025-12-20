@@ -29,23 +29,21 @@ export const PlanetProvider = ({ children }) => {
   useEffect(() => {
     const randomTruFalse = Date.now().toLocaleString().at(-1) % 2;
     const needCustomColor = null;
-    const planetsToGenerate = +utils.randomBetween(2, 5).toFixed(0);
+    const planetsToGenerate = +utils.randomBetween(3, 10).toFixed(0);
     const generatedUniverse = [];
 
     const BASE_RADIUS = 15; // rayon du premier cercle
-    const ORBIT_GAP = 25; // distance entre chaque orbite
+    const ORBIT_GAP = 10; // distance entre chaque orbite
 
     const MAX_SPEED = 0.006; // vitesse max (orbite interne)
     const MIN_SPEED = 0.0001; // vitesse min (orbite externe)
-
-    let canHaveRing = true;
 
     for (let index = 0; index < planetsToGenerate; index++) {
       const size = utils.randomBetween(0.5, 4);
       const texture = utils.getRandomElement(texturesArr);
 
       const orbitRadius = BASE_RADIUS + index * ORBIT_GAP;
-      const angle = Math.random() * Math.PI * 2;
+      const angle = Math.random() * Math.PI * 1;
 
       // facteur de distance normalisé (0 → proche, 1 → loin)
       const t = index / Math.max(1, planetsToGenerate - 1);
@@ -76,12 +74,16 @@ export const PlanetProvider = ({ children }) => {
         },
       };
 
-      if (randomTruFalse && canHaveRing) {
-        planetSettings.hasRing = true;
-        canHaveRing = false;
-      }
-
       generatedUniverse.push(planetSettings);
+    }
+    const howManyNeedRing = utils.randomBetween(
+      0,
+      generatedUniverse.length / 2
+    );
+
+    for (let index = 0; index < howManyNeedRing; index++) {
+      const randomIndex = Math.floor(Math.random() * generatedUniverse.length);
+      generatedUniverse[randomIndex].hasRing = true;
     }
 
     setUniverse(generatedUniverse);

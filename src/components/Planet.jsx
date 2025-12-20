@@ -44,19 +44,20 @@ export const Planet = ({
         if (name == "sun") {
           options.emissive = 0xffffaa; // couleur lumineuse
           options.emissiveMap = nebTexture; // couleur lumineuse
-          options.emissiveIntensity = 2;
+          options.emissiveIntensity = utils.randomBetween(0.5, 5);
         }
         const planetMaterial = new THREE.MeshStandardMaterial(options);
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
 
         if (hasRing) {
-          const dodecahedronGroup = new THREE.Group();
+          const innerDodecahedronGroup = new THREE.Group();
 
-          for (let i = 0; i < 500; i++) {
+          for (let i = 0; i < 900; i++) {
             const dodecahedronGeometry = new THREE.DodecahedronGeometry(
               utils.randomBetween(0.01, 0.09),
               0
             );
+
             const dodecahedronMaterial = new THREE.MeshStandardMaterial({
               color: 0xffffff,
               metalness: 0.8,
@@ -67,18 +68,79 @@ export const Planet = ({
               dodecahedronMaterial
             );
 
-            const angle = (i / 500) * Math.PI * 2;
-            const radius = size + 0.5 + Math.random() * 2;
+            const angle = (i / 900) * Math.PI * 2;
+            let radius = size + 0.5 + Math.random() * 2;
+
             const x = Math.cos(angle) * radius;
             const z = Math.sin(angle) * radius;
             const y = (Math.random() - 0.5) * 0.2; // small random height
 
             dodecahedron.position.set(x, y, z);
-            dodecahedronGroup.add(dodecahedron);
+            innerDodecahedronGroup.add(dodecahedron);
           }
-          dodecahedronGroup.rotation.y = 1.7; // Tilt the whole group
-          ringGroupRef.current = dodecahedronGroup;
-          planet.add(dodecahedronGroup);
+          for (let i = 0; i < 200; i++) {
+            const dodecahedronGeometry = new THREE.DodecahedronGeometry(
+              utils.randomBetween(0.01, 0.09),
+              0
+            );
+
+            const dodecahedronMaterial = new THREE.MeshStandardMaterial({
+              color: 0xffffff,
+              metalness: 0.8,
+              roughness: 1,
+            });
+            const dodecahedron = new THREE.Mesh(
+              dodecahedronGeometry,
+              dodecahedronMaterial
+            );
+
+            const angle = (i / 200) * Math.PI * 2;
+            let radius = size + 0.5 + Math.random() * 3;
+
+            if (i % 2 == 0) {
+              radius = radius * 1;
+            }
+
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = (Math.random() - 0.5) * 0.2; // small random height
+
+            dodecahedron.position.set(x, y, z);
+            innerDodecahedronGroup.add(dodecahedron);
+          }
+          for (let i = 0; i < 200; i++) {
+            const dodecahedronGeometry = new THREE.DodecahedronGeometry(
+              utils.randomBetween(0.01, 0.09),
+              0
+            );
+
+            const dodecahedronMaterial = new THREE.MeshStandardMaterial({
+              color: 0xffffff,
+              metalness: 0.8,
+              roughness: 1,
+            });
+            const dodecahedron = new THREE.Mesh(
+              dodecahedronGeometry,
+              dodecahedronMaterial
+            );
+
+            const angle = (i / 100) * Math.PI * 2;
+            let radius = size + 0.5 + Math.random() * 6;
+
+            if (i % 2 == 0) {
+              radius = radius * 1.2;
+            }
+
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = (Math.random() - 0.5) * 0.2; // small random height
+
+            dodecahedron.position.set(x, y, z);
+            innerDodecahedronGroup.add(dodecahedron);
+          }
+          innerDodecahedronGroup.rotation.y = 1.7; // Tilt the whole group
+          ringGroupRef.current = innerDodecahedronGroup;
+          planet.add(innerDodecahedronGroup);
         }
         planetRef.current = planet;
         if (position) {

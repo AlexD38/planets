@@ -9,6 +9,7 @@ import { Planet } from "./components/Planet";
 import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Parameters } from "./components/Parameters";
+import { playNote } from "./components/Note";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -42,6 +43,7 @@ export default function App() {
      INIT SCENE / CAMERA / RENDERER
      ========================= */
   useEffect(() => {
+    // playNote(50, 5);
     const scene = new THREE.Scene();
     setScene(scene);
 
