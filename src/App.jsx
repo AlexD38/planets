@@ -52,7 +52,7 @@ export default function App() {
       0.1,
       1000
     );
-    camera.position.z = 30;
+    camera.position.z = 80;
     setCamera(camera);
 
     // --- RENDERER ---
@@ -73,12 +73,7 @@ export default function App() {
     controlsRef.current = controls;
 
     // --- BACKGROUND ---
-    const textureLoader = new THREE.TextureLoader();
-    const bg = textureLoader.load("/hd/stars.jpg");
-    bg.wrapS = THREE.RepeatWrapping;
-    bg.wrapT = THREE.RepeatWrapping;
-    scene.background = bg;
-    setBgTexture(bg);
+    scene.background = new THREE.Color(0x000000);
 
     // --- LIGHT ---
     const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
@@ -186,6 +181,8 @@ export default function App() {
               rotation={p.rotation}
               size={p.size}
               texture={p.texture}
+              color={p.color}
+              orbit={p.orbit}
             />
           ))}
 
@@ -193,7 +190,7 @@ export default function App() {
             name="sun"
             position={{ x: 0, y: 0, z: 0 }}
             rotation={-0.001}
-            size={4}
+            size={10}
             texture="sun"
           />
 

@@ -4,7 +4,15 @@ import * as THREE from "three";
 import { utils } from "../utils/utils";
 import { texturesArr } from "../config/config";
 
-export const Planet = ({ position, name, rotation, size, texture }) => {
+export const Planet = ({
+  position,
+  name,
+  rotation,
+  size,
+  texture,
+  color,
+  orbit,
+}) => {
   const {
     planetInfos,
     setPlanetObj,
@@ -29,7 +37,7 @@ export const Planet = ({ position, name, rotation, size, texture }) => {
         const nebTexture = textureLoader.load(`/hd/${texture}.jpg`);
         const planetMaterial = new THREE.MeshStandardMaterial({
           map: nebTexture,
-          color: utils.getRandomHexColor(),
+          color: color || 0xffffff,
         });
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
         planetRef.current = planet;
@@ -49,6 +57,20 @@ export const Planet = ({ position, name, rotation, size, texture }) => {
       }
     }
   }, [scene, size, setPlanetObj, setPlanetObj2]);
+  function updateOrbit(mesh, orbit, delta) {
+    orbit.angle += orbit.speed * delta;
+
+    const x = orbit.radius * Math.cos(orbit.angle);
+    const z = orbit.radius * Math.sin(orbit.angle);
+
+    mesh.position.set(x, 0, z);
+
+    // rotation propre de la planète
+    mesh.rotation.y += rotation;
+
+    // inclinaison du plan orbital (optionnelle)
+    mesh.rotation.z = orbit.inclination;
+  }
   const animate = useCallback(() => {
     if (!renderer || !scene || !camera) {
       return;
@@ -58,6 +80,7 @@ export const Planet = ({ position, name, rotation, size, texture }) => {
 
     // planetRef.current.rotation.y = time * rotation;
     planetRef.current.rotation.y += rotation;
+    updateOrbit(planetRef.current, orbit, 1);
     // planet.rotation.x += 0.01; // bascule
     // planet.rotation.y += 0.01; // spin
     // planet.rotation.z += 0.01; // roulis

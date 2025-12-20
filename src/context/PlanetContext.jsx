@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect } from "react";
 import { utils } from "../utils/utils";
 import { texturesArr } from "../config/config";
+import * as THREE from "three";
 
 export const PlanetContext = createContext();
 
@@ -23,20 +24,52 @@ export const PlanetProvider = ({ children }) => {
   const [universe, setUniverse] = useState(null);
 
   useEffect(() => {
-    const planetsToGenerate = utils.randomBetween(0, 3);
+    // const needCustomColor = Date.now().toLocaleString().at(-1) % 2;
+    const needCustomColor = null;
+    const planetsToGenerate = +utils.randomBetween(2, 5).toFixed(0);
     const generatedUniverse = [];
+
+    const BASE_RADIUS = 15; // rayon du premier cercle
+    const ORBIT_GAP = 25; // distance entre chaque orbite
+
+    const MAX_SPEED = 0.006; // vitesse max (orbite interne)
+    const MIN_SPEED = 0.0001; // vitesse min (orbite externe)
+
     for (let index = 0; index < planetsToGenerate; index++) {
+      const size = utils.randomBetween(0.5, 4);
+
+      const orbitRadius = BASE_RADIUS + index * ORBIT_GAP;
+      const angle = Math.random() * Math.PI * 2;
+
+      // facteur de distance normalisé (0 → proche, 1 → loin)
+      const t = index / Math.max(1, planetsToGenerate - 1);
+
+      // interpolation inverse : proche = rapide, loin = lent
+      const speed = THREE.MathUtils.lerp(MAX_SPEED, MIN_SPEED, t);
+
       const planetSettings = {
         name: utils.generatePlanetInfos()?.name,
         rotation: utils.randomBetween(-0.005, 0.005),
-        x: utils.randomBetween(-20, 20),
-        y: utils.randomBetween(-0, 0),
-        z: utils.randomBetween(-20, 20),
-        size: utils.randomBetween(2, 6),
+
+        x: orbitRadius * Math.cos(angle),
+        y: 0,
+        z: orbitRadius * Math.sin(angle),
+
+        size,
         texture: utils.getRandomElement(texturesArr),
+        color: needCustomColor ? utils.getRandomHexColor() : 0xffffff,
+
+        orbit: {
+          angle,
+          speed,
+          radius: orbitRadius,
+          inclination: utils.randomBetween(-0.2, 0.2),
+        },
       };
+
       generatedUniverse.push(planetSettings);
     }
+
     setUniverse(generatedUniverse);
 
     const handleResize = () => {

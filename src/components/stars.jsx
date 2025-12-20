@@ -78,7 +78,7 @@ export const Stars = () => {
       }
       for (let i = 0; i < moonsCount5; i++) {
         const angle = (i / moonsCount5) * Math.PI * 2; // Répartit les 4 étoiles
-        const radius = utils.randomBetween(1, 15); // Rayon de l'anneau
+        const radius = 100; // Rayon de l'anneau
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
         const y = (Math.random() - 0.5) * 2; // Légère variation verticale
@@ -86,7 +86,7 @@ export const Stars = () => {
       }
       for (let i = 0; i < moonsCount6; i++) {
         const angle = (i / moonsCount6) * Math.PI * 2; // Répartit les 4 étoiles
-        const radius = utils.randomBetween(5, 20); // Rayon de l'anneau
+        const radius = 50; // Rayon de l'anneau
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
         const y = (Math.random() - 0.5) * 2; // Légère variation verticale
@@ -211,7 +211,7 @@ export const Stars = () => {
       setMoons(moons);
       setMoons6(moons6);
 
-      scene.add(/*stars, stars2, */ stars3, stars4, stars5, moons, moons6);
+      scene.add(stars, stars2, stars3, stars4, stars5, moons, moons6);
     }
   }, [
     scene,
