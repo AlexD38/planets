@@ -22,6 +22,7 @@ export const PlanetProvider = ({ children }) => {
   const [camera, setCamera] = useState(null);
   const [renderer, setRenderer] = useState(null);
   const [universe, setUniverse] = useState(null);
+  const [systemInfos, setSystemInfos] = useState(null);
 
   useEffect(() => {
     // const needCustomColor = Date.now().toLocaleString().at(-1) % 2;
@@ -36,6 +37,7 @@ export const PlanetProvider = ({ children }) => {
     const MIN_SPEED = 0.0001; // vitesse min (orbite externe)
 
     for (let index = 0; index < planetsToGenerate; index++) {
+      const generatedPlanet = utils.generatePlanetInfos();
       const size = utils.randomBetween(0.5, 4);
 
       const orbitRadius = BASE_RADIUS + index * ORBIT_GAP;
@@ -48,7 +50,9 @@ export const PlanetProvider = ({ children }) => {
       const speed = THREE.MathUtils.lerp(MAX_SPEED, MIN_SPEED, t);
 
       const planetSettings = {
-        name: utils.generatePlanetInfos()?.name,
+        name: generatedPlanet?.name,
+        type: generatedPlanet?.type,
+        intelligenceFormsDetected: generatedPlanet?.intelligenceFormsDetected,
         rotation: utils.randomBetween(-0.005, 0.005),
 
         x: orbitRadius * Math.cos(angle),
@@ -71,6 +75,8 @@ export const PlanetProvider = ({ children }) => {
     }
 
     setUniverse(generatedUniverse);
+    const analyze = utils.analyzeUniverse(generatedUniverse);
+    setSystemInfos(analyze);
 
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -123,6 +129,7 @@ export const PlanetProvider = ({ children }) => {
         moons6,
         setMoons6,
         universe,
+        systemInfos,
       }}
     >
       {children}

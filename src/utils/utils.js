@@ -57,4 +57,26 @@ export const utils = {
     const dz = a.z - b.z;
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   },
+  analyzeUniverse(universe) {
+    let inhabitedPlanetCount = 0;
+
+    for (const planet of universe) {
+      if (planet.intelligenceFormsDetected) inhabitedPlanetCount++;
+    }
+
+    const analyze = {
+      name: universe[0].name,
+      numberOfPlanets: universe.length,
+      planetTypes: [...new Set(universe.map((x) => x.type))],
+      lifeDetected: inhabitedPlanetCount > 0 ? true : false,
+      infos: `At least ${inhabitedPlanetCount} planet${
+        inhabitedPlanetCount > 1 ? "s" : ""
+      } of this system is inhabited by intelligent life form`,
+    };
+
+    if (!analyze.lifeDetected) {
+      delete analyze.infos;
+    }
+    return analyze;
+  },
 };

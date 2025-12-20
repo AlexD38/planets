@@ -1,6 +1,5 @@
 export const configPlanetInfos = {
   gravity: ["Normal", "Light", "None", "Exteme"],
-  color: ["blue", "red", "yellow", "orange", "purple", "black"],
   cabronDetected: [true, false],
   inhabited: [true, false],
   size: ["xs", "s", "m", "l", "xl", "xxl"],
@@ -270,6 +269,16 @@ export const configPlanetInfos = {
     { ocean: [-2, 25] },
     { ice: [-220, -40] },
     { gas: [-150, -50] },
+  ],
+  type: [
+    "Lava",
+    "Ocean",
+    "EarthLike",
+    "Inhabitable",
+    "Toxic",
+    "RadioActive",
+    "Gas",
+    "Storms",
   ],
 };
 export const texturesArr = [

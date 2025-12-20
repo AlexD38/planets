@@ -4,7 +4,7 @@ import "./styles.css";
 import Typewriter from "typewriter-effect/dist/core";
 
 export const PlanetInfos = () => {
-  const { planetInfos, isMobile } = useContext(PlanetContext);
+  const { systemInfos, planetInfos, isMobile } = useContext(PlanetContext);
   const typewriterRef = useRef(null);
   const typewriterInstanceRef = useRef(null);
   const [canDisplayInfos, setCanDisplayInfos] = useState(false);
@@ -114,37 +114,24 @@ export const PlanetInfos = () => {
               autoFocus={true}
             />
             <div className="planet-infos-infos">Infos :</div>
-            <div className="planet-infos-name">Name : "{planetInfos.name}"</div>
-            <div className="planet-infos-temp">
-              Average Temp : {planetInfos.temperature} °C
+            <div className="planet-infos-name">Name : "{systemInfos.name}"</div>
+
+            <div className="planet-infos-type">
+              Types : {systemInfos.planetTypes.join(", ")}
             </div>
-            <div className="planet-infos-type">Type : {planetInfos.type}</div>
             <div className="planet-infos-gravity">
-              Gravity : {planetInfos.gravity}
-            </div>
-            <div className="planet-infos-size">
-              Size :{planetInfos.size.toUpperCase()}
+              Life detected : {systemInfos.lifeDetected ? "yes" : "none"}
             </div>
             {"_".repeat(40)}
             <br></br>
             <br></br>
             <div className="planet-infos-comments">Comments : </div>
-            <div className="planet-infos-inhabited">
-              {planetInfos.inhabited
-                ? "Life forms live here"
-                : "No life form live here"}
-            </div>
+            <div className="planet-infos-inhabited">{systemInfos.infos}</div>
             <div className="planet-infos-cabronDetected">
               {planetInfos.cabronDetected
                 ? "Carbon detected"
                 : "No Carbon detected"}
             </div>
-            <div className="planet-infos-intelligenceFormsDetected">
-              {planetInfos.intelligenceFormsDetected
-                ? "Intelligence forms have been detected"
-                : "No intelligence form have been detected"}
-            </div>
-            <div className="planet-infos-note">{planetInfos.observations}</div>
           </div>
         </>
       )}
