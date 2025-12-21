@@ -174,7 +174,7 @@ export default function App() {
       <canvas ref={mountRef} className="three-canvas" />
       <Parameters />
       <StopOrbit />
-      {planetInfosDisplay && <PlanetInfos />}
+      <PlanetInfos />
 
       {scene && (
         <>

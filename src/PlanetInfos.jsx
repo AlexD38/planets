@@ -4,7 +4,8 @@ import "./styles.css";
 import Typewriter from "typewriter-effect/dist/core";
 
 export const PlanetInfos = () => {
-  const { systemInfos, planetInfos, isMobile } = useContext(PlanetContext);
+  const { systemInfos, planetInfos, isMobile, planetInfosDisplay } =
+    useContext(PlanetContext);
   const typewriterRef = useRef(null);
   const typewriterInstanceRef = useRef(null);
   const [canDisplayInfos, setCanDisplayInfos] = useState(false);
@@ -99,12 +100,16 @@ export const PlanetInfos = () => {
 
   if (!planetInfos) return null;
 
+  if (!planetInfosDisplay) {
+    return null;
+  }
+
   return (
     <>
       {!displayInfos && (
         <div className="planet-infos-container" ref={typewriterRef}></div>
       )}
-      {displayInfos && (
+      {displayInfos && planetInfosDisplay && (
         <>
           <div className="planet-infos-container">
             <input
