@@ -55,9 +55,9 @@ export default function App() {
       0.1,
       20000
     );
-    camera.position.x = utils.randomBetween(-70, 70);
-    camera.position.y = utils.randomBetween(-70, 70);
-    camera.position.z = utils.randomBetween(40, 80);
+    camera.position.x = utils.randomBetween(-70, 100);
+    camera.position.y = utils.randomBetween(-70, 100);
+    camera.position.z = utils.randomBetween(40, 40);
 
     setCamera(camera);
 
