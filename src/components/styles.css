@@ -1,4 +1,5 @@
-.parameters {
+.parameters,
+.stop-orbit {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -11,4 +12,7 @@
 .parameters:hover {
   transform: rotate(360deg);
   transition: all 0.3s ease-in-out;
+}
+.stop-orbit {
+  top: 3.5rem;
 }

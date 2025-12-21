@@ -15,14 +15,13 @@ export const Planet = ({
   hasRing,
 }) => {
   const {
-    planetInfos,
     setPlanetObj,
     planetObj,
     scene,
-    planetObj2,
     setPlanetObj2,
     renderer,
     camera,
+    stopOrbits,
   } = useContext(PlanetContext);
   const animationFrameId = useRef();
 
@@ -158,7 +157,7 @@ export const Planet = ({
         planetRef.current.geometry = new THREE.SphereGeometry(size, 64, 64);
       }
     }
-  }, [scene, size, setPlanetObj, setPlanetObj2]);
+  }, [scene, size, setPlanetObj, setPlanetObj2, stopOrbits]);
   function updateOrbit(mesh, orbit, delta) {
     if (orbit?.angle) orbit.angle += orbit.speed * delta;
 
@@ -184,15 +183,17 @@ export const Planet = ({
     const time = Date.now();
 
     // planetRef.current.rotation.y = time * rotation;
-    planetRef.current.rotation.y += rotation;
-    updateOrbit(planetRef.current, orbit, 1);
+    if (!stopOrbits) {
+      planetRef.current.rotation.y += rotation;
+      updateOrbit(planetRef.current, orbit, 1);
+    }
     // planet.rotation.x += 0.01; // bascule
     // planet.rotation.y += 0.01; // spin
     // planet.rotation.z += 0.01; // roulis
 
     // renderer.render(scene, camera);
     animationFrameId.current = requestAnimationFrame(animate);
-  }, [renderer, scene, camera, planetObj]);
+  }, [renderer, scene, camera, planetObj, stopOrbits]);
   useEffect(() => {
     animationFrameId.current = requestAnimationFrame(animate);
     return () => {

@@ -10,6 +10,7 @@ import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Parameters } from "./components/Parameters";
 import { playNote } from "./components/Note";
+import { StopOrbit } from "./components/StopOrbits";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -49,12 +50,15 @@ export default function App() {
 
     // --- CAMERA ---
     const camera = new THREE.PerspectiveCamera(
-      75,
+      80,
       window.innerWidth / window.innerHeight,
       0.1,
-      15000
+      20000
     );
-    camera.position.z = 40;
+    camera.position.x = utils.randomBetween(-70, 70);
+    camera.position.y = utils.randomBetween(-70, 70);
+    camera.position.z = utils.randomBetween(40, 80);
+
     setCamera(camera);
 
     // --- RENDERER ---
@@ -169,6 +173,7 @@ export default function App() {
     <>
       <canvas ref={mountRef} className="three-canvas" />
       <Parameters />
+      <StopOrbit />
       {planetInfosDisplay && <PlanetInfos />}
 
       {scene && (

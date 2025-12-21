@@ -26,6 +26,7 @@ export const PlanetProvider = ({ children }) => {
   const [renderer, setRenderer] = useState(null);
   const [universe, setUniverse] = useState(null);
   const [systemInfos, setSystemInfos] = useState(null);
+  const [stopOrbits, setStopOrbits] = useState(false);
 
   useEffect(() => {
     const randomTruFalse = Date.now().toLocaleString().at(-1) % 2;
@@ -80,7 +81,7 @@ export const PlanetProvider = ({ children }) => {
 
     const howManyNeedRing = utils.randomBetween(
       0,
-      generatedUniverse.length / 2
+      generatedUniverse.length / 3
     );
 
     for (let index = 0; index < howManyNeedRing; index++) {
@@ -150,6 +151,8 @@ export const PlanetProvider = ({ children }) => {
         setPlanetInfosDisplay,
         sun,
         setSun,
+        stopOrbits,
+        setStopOrbits,
       }}
     >
       {children}
