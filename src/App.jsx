@@ -200,6 +200,21 @@ export default function App() {
             size={5}
             texture="sun"
           />
+          <BlackHole
+            color1={new THREE.Color(utils.getRandomHexColor())}
+            color2={new THREE.Color(utils.getRandomHexColor())}
+            tilt={{
+              x: 0,
+              y: utils.randomBetween(0, 9),
+              z: utils.randomBetween(0, 9),
+            }}
+            position={{
+              x: utils.randomBetween(0, 100),
+              y: utils.randomBetween(0, 100),
+              z: utils.randomBetween(0, 100),
+            }}
+            size={10}
+          />
           {Array.from({ length: nbOfBlackHoles }).map((_, index) => (
             <BlackHole
               key={index}
