@@ -9,8 +9,8 @@ import { Planet } from "./components/Planet";
 import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Parameters } from "./components/Parameters";
-import { playNote } from "./components/Note";
 import { StopOrbit } from "./components/StopOrbits";
+import { BlackHole } from "./components/BlackHole";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -39,6 +39,7 @@ export default function App() {
 
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
   const moon6RotationTilt = utils.randomBetween(-0.5, 0.5);
+  const nbOfBlackHoles = utils.randomBetween(1, 10);
 
   /* =========================
      INIT SCENE / CAMERA / RENDERER
@@ -199,9 +200,27 @@ export default function App() {
             size={5}
             texture="sun"
           />
+          {Array.from({ length: nbOfBlackHoles }).map((_, index) => (
+            <BlackHole
+              key={index}
+              color1={new THREE.Color(utils.getRandomHexColor())}
+              color2={new THREE.Color(utils.getRandomHexColor())}
+              tilt={{
+                x: 0,
+                y: utils.randomBetween(0, 9),
+                z: utils.randomBetween(0, 9),
+              }}
+              position={{
+                x: utils.randomBetween(-1000, 1000),
+                y: utils.randomBetween(-1000, 1000),
+                z: utils.randomBetween(-1000, 1000),
+              }}
+              size={10}
+            />
+          ))}
 
           <Stars />
-          <Actions />
+          {/* <Actions /> */}
         </>
       )}
     </>
