@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { PlanetContext } from "../context/PlanetContext";
+import { FlyMode } from "./FlyMode";
 import "../styles.css";
 
 export const Actions = () => {

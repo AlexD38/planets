@@ -1,5 +1,6 @@
 .parameters,
-.stop-orbit {
+.stop-orbit,
+.fly-mode {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -9,6 +10,12 @@
   cursor: pointer;
 }
 
+.fly-mode {
+  top: 6rem;
+}
+.inactive {
+  color: darkgray;
+}
 .parameters:hover {
   transform: rotate(360deg);
   transition: all 0.3s ease-in-out;

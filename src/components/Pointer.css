@@ -1,0 +1,10 @@
+.pointer-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px; /* A larger container for the SVG */
+  height: 100px;
+  pointer-events: none; /* Important: so it doesn't block mouse events */
+  z-index: 100;
+}

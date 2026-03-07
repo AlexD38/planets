@@ -27,6 +27,9 @@ export const PlanetProvider = ({ children }) => {
   const [universe, setUniverse] = useState(null);
   const [systemInfos, setSystemInfos] = useState(null);
   const [stopOrbits, setStopOrbits] = useState(false);
+  const [isFlyMode, setIsFlyMode] = useState(false);
+
+  const toggleFlyMode = () => setIsFlyMode((prev) => !prev);
 
   useEffect(() => {
     const randomTruFalse = Date.now().toLocaleString().at(-1) % 2;
@@ -153,6 +156,8 @@ export const PlanetProvider = ({ children }) => {
         setSun,
         stopOrbits,
         setStopOrbits,
+        isFlyMode,
+        toggleFlyMode,
       }}
     >
       {children}

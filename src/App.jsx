@@ -11,12 +11,25 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Parameters } from "./components/Parameters";
 import { StopOrbit } from "./components/StopOrbits";
 import { BlackHole } from "./components/BlackHole";
+import { FlyMode } from "./components/FlyMode";
+import { Pointer } from "./components/Pointer";
 
 export default function App() {
   const mountRef = useRef(null);
   const animationFrameId = useRef();
   const mouseRef = useRef(new THREE.Vector2());
   const controlsRef = useRef(null);
+  const clock = useRef(new THREE.Clock());
+  const moveState = useRef({
+    thrust: 0,
+    thrustReverse: 0,
+    pitchUp: 0,
+    pitchDown: 0,
+    rollLeft: 0,
+    rollRight: 0,
+  });
+  const velocity = useRef(new THREE.Vector3());
+  const angularVelocity = useRef(new THREE.Vector3());
 
   const {
     scene,
@@ -35,6 +48,7 @@ export default function App() {
     setRenderer,
     universe,
     planetInfosDisplay,
+    isFlyMode,
   } = useContext(PlanetContext);
 
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
@@ -54,7 +68,7 @@ export default function App() {
       80,
       window.innerWidth / window.innerHeight,
       0.1,
-      20000
+      20000,
     );
     camera.position.x = utils.randomBetween(-70, 100);
     camera.position.y = utils.randomBetween(-70, 100);
@@ -109,6 +123,71 @@ export default function App() {
     };
   }, [setScene, setCamera, setRenderer]);
 
+  // --- FLY MODE CONTROLS ---
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = !isFlyMode;
+    }
+  }, [isFlyMode]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      switch (event.code) {
+        case "Space":
+          moveState.current.thrust = 1;
+          break;
+        case "ArrowUp":
+          moveState.current.pitchUp = 1;
+          break;
+        case "ArrowDown":
+          moveState.current.pitchDown = 1;
+          break;
+        case "ArrowLeft":
+          moveState.current.rollLeft = 1;
+          break;
+        case "ArrowRight":
+          moveState.current.rollRight = 1;
+          break;
+        case "ShiftLeft":
+        case "ShiftRight":
+          moveState.current.thrustReverse = 1;
+          break;
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      switch (event.code) {
+        case "Space":
+          moveState.current.thrust = 0;
+          break;
+        case "ArrowUp":
+          moveState.current.pitchUp = 0;
+          break;
+        case "ArrowDown":
+          moveState.current.pitchDown = 0;
+          break;
+        case "ArrowLeft":
+          moveState.current.rollLeft = 0;
+          break;
+        case "ArrowRight":
+          moveState.current.rollRight = 0;
+          break;
+        case "ShiftLeft":
+        case "ShiftRight":
+          moveState.current.thrustReverse = 0;
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
   /* =========================
      ANIMATION LOOP
      ========================= */
@@ -135,17 +214,81 @@ export default function App() {
       moons6.rotation.z = moon6RotationTilt;
     }
 
-    // const idleStrength = 0.5; // → très subtil
-    const idleStrength = 3.5; //→ plus expressif
-    const idleLerp = 0.01; // → cinématique
-    // const idleLerp = 0.05; //→ réactif
-    if (!controlsRef.current?.dragging) {
-      camera.position.x +=
-        (mouseRef.current.x * idleStrength - camera.position.x) * idleLerp;
-      camera.position.y +=
-        (mouseRef.current.y * idleStrength - camera.position.y) * idleLerp;
+    // --- FLY MODE MOVEMENT (FLIGHT SIM WITH INERTIA) ---
+    if (isFlyMode) {
+      const delta = clock.current.getDelta();
+
+      // --- Constants ---
+      const rotationSpeed = 1.5;
+      const acceleration = 200.0;
+      const damping = 3.0;
+      const maxSpeed = 50.0;
+      const angularDamping = 0.95;
+
+      // --- Handle Rotation ---
+      const pitchInput =
+        moveState.current.pitchUp - moveState.current.pitchDown;
+      const rollInput =
+        moveState.current.rollLeft - moveState.current.rollRight;
+
+      angularVelocity.current.x += pitchInput * rotationSpeed * delta;
+      angularVelocity.current.z += rollInput * rotationSpeed * delta;
+
+      // Apply angular damping
+      angularVelocity.current.multiplyScalar(angularDamping);
+
+      // Apply rotation to camera
+      const deltaRotation = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(
+          angularVelocity.current.x * delta,
+          0, // No yaw
+          angularVelocity.current.z * delta,
+          "XYZ",
+        ),
+      );
+      camera.quaternion.multiply(deltaRotation);
+
+      // --- Handle Thrust & Movement ---
+      if (moveState.current.thrust) {
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        velocity.current.addScaledVector(forward, acceleration * delta);
+      }
+      if (moveState.current.thrustReverse) {
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        velocity.current.addScaledVector(forward, -acceleration * delta);
+      }
+
+      // --- Apply Damping ---
+      const dampingVector = velocity.current
+        .clone()
+        .multiplyScalar(-damping * delta);
+      velocity.current.add(dampingVector);
+
+      // --- Clamp Speed ---
+      if (velocity.current.length() > maxSpeed) {
+        velocity.current.setLength(maxSpeed);
+      }
+
+      // --- Update Position ---
+      camera.position.addScaledVector(velocity.current, delta);
+    } else {
+      velocity.current.set(0, 0, 0);
+      angularVelocity.current.set(0, 0, 0);
+      // const idleStrength = 0.5; // → très subtil
+      const idleStrength = 3.5; //→ plus expressif
+      const idleLerp = 0.01; // → cinématique
+      // const idleLerp = 0.05; //→ réactif
+      if (!controlsRef.current?.dragging) {
+        camera.position.x +=
+          (mouseRef.current.x * idleStrength - camera.position.x) * idleLerp;
+        camera.position.y +=
+          (mouseRef.current.y * idleStrength - camera.position.y) * idleLerp;
+      }
+      controlsRef.current?.update();
     }
-    controlsRef.current?.update();
+
     renderer.render(scene, camera);
 
     animationFrameId.current = requestAnimationFrame(animate);
@@ -160,6 +303,7 @@ export default function App() {
     stars5,
     moons,
     moons6,
+    isFlyMode,
   ]);
 
   useEffect(() => {
@@ -174,6 +318,8 @@ export default function App() {
     <>
       <canvas ref={mountRef} className="three-canvas" />
       <Parameters />
+      <FlyMode />
+      <Pointer />
       <StopOrbit />
       <PlanetInfos />
 
