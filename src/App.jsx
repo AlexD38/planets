@@ -1,10 +1,7 @@
-import { useContext, useEffect, useRef, useCallback, useState } from "react";
+import { useContext, useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
 import { PlanetInfos } from "./PlanetInfos";
 import { PlanetContext } from "./context/PlanetContext";
-import { Actions } from "./components/Actions";
-import { utils } from "./utils/utils";
-import "./App.css";
 import { Planet } from "./components/Planet";
 import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -13,6 +10,8 @@ import { StopOrbit } from "./components/StopOrbits";
 import { BlackHole } from "./components/BlackHole";
 import { FlyMode } from "./components/FlyMode";
 import { Pointer } from "./components/Pointer";
+import { utils } from "./utils/utils";
+import "./App.css";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -22,11 +21,11 @@ export default function App() {
   const clock = useRef(new THREE.Clock());
   const velocity = useRef(new THREE.Vector3());
   const angularVelocity = useRef(new THREE.Vector3());
+  const blackHolesRef = useRef([]);
 
   const {
     scene,
     setScene,
-    planetObj,
     stars1,
     stars2,
     stars3,
@@ -39,36 +38,32 @@ export default function App() {
     renderer,
     setRenderer,
     universe,
-    planetInfosDisplay,
     moveState,
   } = useContext(PlanetContext);
 
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
   const moon6RotationTilt = utils.randomBetween(-0.5, 0.5);
-  const nbOfBlackHoles = utils.randomBetween(1, 10);
 
   /* =========================
      INIT SCENE / CAMERA / RENDERER
      ========================= */
   useEffect(() => {
-    // playNote(50, 5);
     const scene = new THREE.Scene();
     setScene(scene);
 
-    // --- CAMERA ---
     const camera = new THREE.PerspectiveCamera(
       80,
       window.innerWidth / window.innerHeight,
       0.1,
       20000,
     );
-    camera.position.x = utils.randomBetween(-70, 100);
-    camera.position.y = utils.randomBetween(-70, 100);
-    camera.position.z = utils.randomBetween(40, 40);
-
+    camera.position.set(
+      utils.randomBetween(-70, 100),
+      utils.randomBetween(-70, 100),
+      utils.randomBetween(40, 40),
+    );
     setCamera(camera);
 
-    // --- RENDERER ---
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       canvas: mountRef.current,
@@ -76,7 +71,6 @@ export default function App() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     setRenderer(renderer);
 
-    // --- CONTROLS (UNE SEULE FOIS) ---
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
@@ -85,26 +79,21 @@ export default function App() {
     controls.maxDistance = 500;
     controlsRef.current = controls;
 
-    // --- BACKGROUND ---
     scene.background = new THREE.Color(0x000000);
 
-    // --- LIGHT ---
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     scene.add(ambientLight);
 
-    // Lumière rouge au centre
     const light = new THREE.PointLight(0xffffff, 5000, 0);
     light.position.set(0, 0, 0);
     scene.add(light);
 
-    // --- MOUSE ---
     const onMouseMove = (e) => {
       mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
     window.addEventListener("mousemove", onMouseMove);
 
-    // --- CLEANUP ---
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       controls.dispose();
@@ -121,6 +110,30 @@ export default function App() {
       controlsRef.current.enabled = !moveState.isFlyMode;
     }
   }, [moveState.isFlyMode]);
+
+  /* =========================
+     INIT BLACKHOLES (une fois)
+     ========================= */
+  useEffect(() => {
+    if (blackHolesRef.current.length === 0) {
+      const count = utils.randomBetween(1, 10);
+      blackHolesRef.current = Array.from({ length: count }).map(() => ({
+        color1: new THREE.Color(utils.getRandomHexColor()),
+        color2: new THREE.Color(utils.getRandomHexColor()),
+        tilt: {
+          x: 0,
+          y: utils.randomBetween(0, 9),
+          z: utils.randomBetween(0, 9),
+        },
+        position: {
+          x: utils.randomBetween(-1000, 1000),
+          y: utils.randomBetween(-1000, 1000),
+          z: utils.randomBetween(-1000, 1000),
+        },
+        size: 10,
+      }));
+    }
+  }, []);
 
   /* =========================
      ANIMATION LOOP
@@ -148,83 +161,68 @@ export default function App() {
       moons6.rotation.z = moon6RotationTilt;
     }
 
-    // --- FLY MODE MOVEMENT (FLIGHT SIM WITH INERTIA) ---
+    // --- FLY MODE MOVEMENT ---
     if (moveState.isFlyMode) {
       const delta = clock.current.getDelta();
-
-      // --- Constants ---
       const rotationSpeed = 1.5;
       const acceleration = 200.0;
       const damping = 3.0;
       const maxSpeed = 50.0;
       const angularDamping = 0.95;
 
-      // --- Handle Rotation ---
-      const pitchInput =
-        moveState.pitchUp - moveState.pitchDown;
-      const rollInput =
-        moveState.rollLeft - moveState.rollRight;
+      const pitchInput = moveState.pitchUp - moveState.pitchDown;
+      const rollInput = moveState.rollLeft - moveState.rollRight;
 
       angularVelocity.current.x += pitchInput * rotationSpeed * delta;
       angularVelocity.current.z += rollInput * rotationSpeed * delta;
-
-      // Apply angular damping
       angularVelocity.current.multiplyScalar(angularDamping);
 
-      // Apply rotation to camera
       const deltaRotation = new THREE.Quaternion().setFromEuler(
         new THREE.Euler(
           angularVelocity.current.x * delta,
-          0, // No yaw
+          0,
           angularVelocity.current.z * delta,
           "XYZ",
         ),
       );
       camera.quaternion.multiply(deltaRotation);
 
-      // --- Handle Thrust & Movement ---
-      if (moveState.thrust) {
+      if (moveState.thrust || moveState.thrustReverse) {
         const forward = new THREE.Vector3();
         camera.getWorldDirection(forward);
-        velocity.current.addScaledVector(forward, acceleration * delta);
-      }
-      if (moveState.thrustReverse) {
-        const forward = new THREE.Vector3();
-        camera.getWorldDirection(forward);
-        velocity.current.addScaledVector(forward, -acceleration * delta);
+        if (moveState.thrust)
+          velocity.current.addScaledVector(forward, acceleration * delta);
+        if (moveState.thrustReverse)
+          velocity.current.addScaledVector(forward, -acceleration * delta);
       }
 
-      // --- Apply Damping ---
       const dampingVector = velocity.current
         .clone()
         .multiplyScalar(-damping * delta);
       velocity.current.add(dampingVector);
 
-      // --- Clamp Speed ---
-      if (velocity.current.length() > maxSpeed) {
+      if (velocity.current.length() > maxSpeed)
         velocity.current.setLength(maxSpeed);
-      }
 
-      // --- Update Position ---
       camera.position.addScaledVector(velocity.current, delta);
     } else {
       velocity.current.set(0, 0, 0);
       angularVelocity.current.set(0, 0, 0);
-      // const idleStrength = 0.5; // → très subtil
-      const idleStrength = 3.5; //→ plus expressif
-      const idleLerp = 0.01; // → cinématique
-      // const idleLerp = 0.05; //→ réactif
+
+      const idleStrength = 3.5;
+      const idleLerp = 0.01;
+
       if (!controlsRef.current?.dragging) {
         camera.position.x +=
           (mouseRef.current.x * idleStrength - camera.position.x) * idleLerp;
         camera.position.y +=
           (mouseRef.current.y * idleStrength - camera.position.y) * idleLerp;
       }
+
       controlsRef.current?.update();
     }
 
     renderer.render(scene, camera);
-
     animationFrameId.current = requestAnimationFrame(animate);
   }, [
     renderer,
@@ -280,42 +278,19 @@ export default function App() {
             size={5}
             texture="sun"
           />
-          <BlackHole
-            color1={new THREE.Color(utils.getRandomHexColor())}
-            color2={new THREE.Color(utils.getRandomHexColor())}
-            tilt={{
-              x: 0,
-              y: utils.randomBetween(0, 9),
-              z: utils.randomBetween(0, 9),
-            }}
-            position={{
-              x: utils.randomBetween(0, 100),
-              y: utils.randomBetween(0, 100),
-              z: utils.randomBetween(0, 100),
-            }}
-            size={10}
-          />
-          {Array.from({ length: nbOfBlackHoles }).map((_, index) => (
+
+          {blackHolesRef.current.map((bh, index) => (
             <BlackHole
               key={index}
-              color1={new THREE.Color(utils.getRandomHexColor())}
-              color2={new THREE.Color(utils.getRandomHexColor())}
-              tilt={{
-                x: 0,
-                y: utils.randomBetween(0, 9),
-                z: utils.randomBetween(0, 9),
-              }}
-              position={{
-                x: utils.randomBetween(-1000, 1000),
-                y: utils.randomBetween(-1000, 1000),
-                z: utils.randomBetween(-1000, 1000),
-              }}
-              size={10}
+              color1={bh.color1}
+              color2={bh.color2}
+              tilt={bh.tilt}
+              position={bh.position}
+              size={bh.size}
             />
           ))}
 
           <Stars />
-          {/* <Actions /> */}
         </>
       )}
     </>
