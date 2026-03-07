@@ -164,10 +164,10 @@ export default function App() {
     // --- FLY MODE MOVEMENT ---
     if (moveState.isFlyMode) {
       const delta = clock.current.getDelta();
-      const rotationSpeed = 1.5;
-      const acceleration = 200.0;
-      const damping = 3.0;
-      const maxSpeed = 50.0;
+      const rotationSpeed = 3.5;
+      const acceleration = 50.0;
+      const damping = 2.0;
+      const maxSpeed = 500.0;
       const angularDamping = 0.95;
 
       const pitchInput = moveState.pitchUp - moveState.pitchDown;
