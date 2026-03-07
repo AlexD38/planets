@@ -1,18 +1,20 @@
 import { useContext } from "react";
 import { PlanetContext } from "../context/PlanetContext";
-import "../styles.css";
+import "./styles.css";
 
 export const FlyMode = () => {
-  const { isFlyMode, toggleFlyMode } = useContext(PlanetContext);
-  const className = "fa-brands fa-space-awesome fly-mode";
+  const { moveState, toggleFlyMode } = useContext(PlanetContext);
+  const clasName = "fa-brands fa-space-awesome fly-mode";
 
   const handleToggleFlyMode = () => {
-    isFlyMode ? toggleFlyMode(false) : toggleFlyMode(true);
+    moveState
+      ? toggleFlyMode(false)
+      : toggleFlyMode({ ...moveState, isFlyMode: true });
   };
 
   return (
     <i
-      class={isFlyMode ? className : `${className} inactive`}
+      class={moveState.isFlyMode ? clasName : `${clasName} inactive`}
       onClick={handleToggleFlyMode}
     ></i>
   );

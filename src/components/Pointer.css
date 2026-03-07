@@ -8,3 +8,17 @@
   pointer-events: none; /* Important: so it doesn't block mouse events */
   z-index: 100;
 }
+
+.key-display {
+  position: fixed;
+  top: calc(50% + 70px); /* Position below the pointer */
+  left: 50%;
+  transform: translateX(-50%);
+  color: chartreuse;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  text-align: center;
+  text-shadow: 0 0 5px chartreuse;
+  pointer-events: none;
+  z-index: 100;
+}

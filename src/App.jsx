@@ -20,14 +20,6 @@ export default function App() {
   const mouseRef = useRef(new THREE.Vector2());
   const controlsRef = useRef(null);
   const clock = useRef(new THREE.Clock());
-  const moveState = useRef({
-    thrust: 0,
-    thrustReverse: 0,
-    pitchUp: 0,
-    pitchDown: 0,
-    rollLeft: 0,
-    rollRight: 0,
-  });
   const velocity = useRef(new THREE.Vector3());
   const angularVelocity = useRef(new THREE.Vector3());
 
@@ -48,7 +40,7 @@ export default function App() {
     setRenderer,
     universe,
     planetInfosDisplay,
-    isFlyMode,
+    moveState,
   } = useContext(PlanetContext);
 
   const moonRotationTilt = utils.randomBetween(-0.5, 0.5);
@@ -126,67 +118,9 @@ export default function App() {
   // --- FLY MODE CONTROLS ---
   useEffect(() => {
     if (controlsRef.current) {
-      controlsRef.current.enabled = !isFlyMode;
+      controlsRef.current.enabled = !moveState.isFlyMode;
     }
-  }, [isFlyMode]);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      switch (event.code) {
-        case "Space":
-          moveState.current.thrust = 1;
-          break;
-        case "ArrowUp":
-          moveState.current.pitchUp = 1;
-          break;
-        case "ArrowDown":
-          moveState.current.pitchDown = 1;
-          break;
-        case "ArrowLeft":
-          moveState.current.rollLeft = 1;
-          break;
-        case "ArrowRight":
-          moveState.current.rollRight = 1;
-          break;
-        case "ShiftLeft":
-        case "ShiftRight":
-          moveState.current.thrustReverse = 1;
-          break;
-      }
-    };
-
-    const handleKeyUp = (event) => {
-      switch (event.code) {
-        case "Space":
-          moveState.current.thrust = 0;
-          break;
-        case "ArrowUp":
-          moveState.current.pitchUp = 0;
-          break;
-        case "ArrowDown":
-          moveState.current.pitchDown = 0;
-          break;
-        case "ArrowLeft":
-          moveState.current.rollLeft = 0;
-          break;
-        case "ArrowRight":
-          moveState.current.rollRight = 0;
-          break;
-        case "ShiftLeft":
-        case "ShiftRight":
-          moveState.current.thrustReverse = 0;
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
+  }, [moveState.isFlyMode]);
 
   /* =========================
      ANIMATION LOOP
@@ -215,7 +149,7 @@ export default function App() {
     }
 
     // --- FLY MODE MOVEMENT (FLIGHT SIM WITH INERTIA) ---
-    if (isFlyMode) {
+    if (moveState.isFlyMode) {
       const delta = clock.current.getDelta();
 
       // --- Constants ---
@@ -227,9 +161,9 @@ export default function App() {
 
       // --- Handle Rotation ---
       const pitchInput =
-        moveState.current.pitchUp - moveState.current.pitchDown;
+        moveState.pitchUp - moveState.pitchDown;
       const rollInput =
-        moveState.current.rollLeft - moveState.current.rollRight;
+        moveState.rollLeft - moveState.rollRight;
 
       angularVelocity.current.x += pitchInput * rotationSpeed * delta;
       angularVelocity.current.z += rollInput * rotationSpeed * delta;
@@ -249,12 +183,12 @@ export default function App() {
       camera.quaternion.multiply(deltaRotation);
 
       // --- Handle Thrust & Movement ---
-      if (moveState.current.thrust) {
+      if (moveState.thrust) {
         const forward = new THREE.Vector3();
         camera.getWorldDirection(forward);
         velocity.current.addScaledVector(forward, acceleration * delta);
       }
-      if (moveState.current.thrustReverse) {
+      if (moveState.thrustReverse) {
         const forward = new THREE.Vector3();
         camera.getWorldDirection(forward);
         velocity.current.addScaledVector(forward, -acceleration * delta);
@@ -303,7 +237,7 @@ export default function App() {
     stars5,
     moons,
     moons6,
-    isFlyMode,
+    moveState,
   ]);
 
   useEffect(() => {

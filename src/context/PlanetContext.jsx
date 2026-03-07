@@ -27,9 +27,85 @@ export const PlanetProvider = ({ children }) => {
   const [universe, setUniverse] = useState(null);
   const [systemInfos, setSystemInfos] = useState(null);
   const [stopOrbits, setStopOrbits] = useState(false);
-  const [isFlyMode, setIsFlyMode] = useState(false);
+  const [moveState, setMoveState] = useState({
+    thrust: 0,
+    thrustReverse: 0,
+    pitchUp: 0,
+    pitchDown: 0,
+    rollLeft: 0,
+    rollRight: 0,
+    isFlyMode: false,
+  });
 
-  const toggleFlyMode = () => setIsFlyMode((prev) => !prev);
+  const toggleFlyMode = () => {
+    setMoveState((prev) => ({ ...prev, isFlyMode: !prev.isFlyMode }));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      setMoveState((prev) => {
+        const newMoveState = { ...prev };
+        switch (event.code) {
+          case "Space":
+            newMoveState.thrust = 1;
+            break;
+          case "ArrowUp":
+            newMoveState.pitchUp = 1;
+            break;
+          case "ArrowDown":
+            newMoveState.pitchDown = 1;
+            break;
+          case "ArrowLeft":
+            newMoveState.rollLeft = 1;
+            break;
+          case "ArrowRight":
+            newMoveState.rollRight = 1;
+            break;
+          case "ShiftLeft":
+          case "ShiftRight":
+            newMoveState.thrustReverse = 1;
+            break;
+        }
+        return newMoveState;
+      });
+    };
+
+    const handleKeyUp = (event) => {
+      setMoveState((prev) => {
+        const newMoveState = { ...prev };
+        switch (event.code) {
+          case "Space":
+            newMoveState.thrust = 0;
+            break;
+          case "ArrowUp":
+            newMoveState.pitchUp = 0;
+            break;
+          case "ArrowDown":
+            newMoveState.pitchDown = 0;
+            break;
+          case "ArrowLeft":
+            newMoveState.rollLeft = 0;
+            break;
+          case "ArrowRight":
+            newMoveState.rollRight = 0;
+            break;
+          case "ShiftLeft":
+          case "ShiftRight":
+            newMoveState.thrustReverse = 0;
+            break;
+        }
+        return newMoveState;
+      });
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   useEffect(() => {
     const randomTruFalse = Date.now().toLocaleString().at(-1) % 2;
@@ -84,7 +160,7 @@ export const PlanetProvider = ({ children }) => {
 
     const howManyNeedRing = utils.randomBetween(
       0,
-      generatedUniverse.length / 3
+      generatedUniverse.length / 3,
     );
 
     for (let index = 0; index < howManyNeedRing; index++) {
@@ -156,7 +232,7 @@ export const PlanetProvider = ({ children }) => {
         setSun,
         stopOrbits,
         setStopOrbits,
-        isFlyMode,
+        moveState,
         toggleFlyMode,
       }}
     >
