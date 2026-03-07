@@ -1,24 +1,97 @@
-.pointer-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100px; /* A larger container for the SVG */
-  height: 100px;
-  pointer-events: none; /* Important: so it doesn't block mouse events */
-  z-index: 100;
+.parameters,
+.stop-orbit,
+.fly-mode {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  color: chartreuse;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
 }
 
-.key-display {
-  position: fixed;
-  top: calc(50% + 70px); /* Position below the pointer */
+.fly-mode {
+  top: 6rem;
+}
+
+.inactive {
+  color: darkgray;
+}
+
+.parameters:hover {
+  transform: rotate(360deg);
+  transition: all 0.3s ease-in-out;
+}
+
+.stop-orbit {
+  top: 3.5rem;
+}
+
+/* ------------------------- */
+/* POINTER */
+/* ------------------------- */
+
+.pointer-container {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  color: chartreuse;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 14px;
-  text-align: center;
-  text-shadow: 0 0 5px chartreuse;
+
+  transform: translate(-50%, -50%);
+}
+
+/* ------------------------- */
+/* KEY DISPLAY */
+/* ------------------------- */
+
+.key-display {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
-  z-index: 100;
+}
+
+.key-item {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  color: chartreuse;
+  font-size: 24px;
+
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 4px chartreuse);
+
+  animation: pulse 0.6s infinite alternate;
+}
+
+/* Positions autour du viseur */
+
+.key-item.top {
+  transform: translate(-50%, -280%);
+}
+
+.key-item.bottom {
+  transform: translate(-50%, 180%);
+}
+
+.key-item.left {
+  transform: translate(-300%, -50%);
+}
+
+.key-item.right {
+  transform: translate(200%, -50%);
+}
+
+/* Animation */
+
+@keyframes pulse {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }

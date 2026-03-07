@@ -23,3 +23,57 @@
 .stop-orbit {
   top: 3.5rem;
 }
+.key-display {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.key-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: chartreuse;
+  font-size: 24px;
+  filter: drop-shadow(0 0 4px chartreuse);
+  transform: translate(-50%, -50%);
+  animation: pulse 0.6s infinite alternate;
+}
+
+/* Offsets autour du viseur */
+
+.key-item.top {
+  transform: translate(-50%, -140%);
+}
+
+.key-item.bottom {
+  transform: translate(-50%, 40%);
+}
+
+.key-item.left {
+  transform: translate(-180%, -50%);
+}
+
+.key-item.right {
+  transform: translate(80%, -50%);
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pointer-container {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+}
