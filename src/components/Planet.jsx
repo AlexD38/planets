@@ -9,6 +9,7 @@ export const Planet = ({
   name,
   rotation,
   size,
+  orbitCenter,
   texture,
   color,
   orbit,
@@ -43,7 +44,7 @@ export const Planet = ({
         if (name == "sun") {
           options.emissive = 0xffffaa; // couleur lumineuse
           options.emissiveMap = nebTexture; // couleur lumineuse
-          options.emissiveIntensity = utils.randomBetween(0.5, 5);
+          options.emissiveIntensity = utils.randomBetween(0.1, 50);
         }
         const planetMaterial = new THREE.MeshStandardMaterial(options);
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
@@ -54,7 +55,7 @@ export const Planet = ({
           for (let i = 0; i < 900; i++) {
             const dodecahedronGeometry = new THREE.DodecahedronGeometry(
               utils.randomBetween(0.01, 0.09),
-              0
+              0,
             );
 
             const dodecahedronMaterial = new THREE.MeshStandardMaterial({
@@ -64,7 +65,7 @@ export const Planet = ({
             });
             const dodecahedron = new THREE.Mesh(
               dodecahedronGeometry,
-              dodecahedronMaterial
+              dodecahedronMaterial,
             );
 
             const angle = (i / 900) * Math.PI * 2;
@@ -80,7 +81,7 @@ export const Planet = ({
           for (let i = 0; i < 200; i++) {
             const dodecahedronGeometry = new THREE.DodecahedronGeometry(
               utils.randomBetween(0.01, 0.09),
-              0
+              0,
             );
 
             const dodecahedronMaterial = new THREE.MeshStandardMaterial({
@@ -90,7 +91,7 @@ export const Planet = ({
             });
             const dodecahedron = new THREE.Mesh(
               dodecahedronGeometry,
-              dodecahedronMaterial
+              dodecahedronMaterial,
             );
 
             const angle = (i / 200) * Math.PI * 2;
@@ -110,7 +111,7 @@ export const Planet = ({
           for (let i = 0; i < 200; i++) {
             const dodecahedronGeometry = new THREE.DodecahedronGeometry(
               utils.randomBetween(0.01, 0.09),
-              0
+              0,
             );
 
             const dodecahedronMaterial = new THREE.MeshStandardMaterial({
@@ -120,7 +121,7 @@ export const Planet = ({
             });
             const dodecahedron = new THREE.Mesh(
               dodecahedronGeometry,
-              dodecahedronMaterial
+              dodecahedronMaterial,
             );
 
             const angle = (i / 100) * Math.PI * 2;
@@ -157,17 +158,19 @@ export const Planet = ({
         planetRef.current.geometry = new THREE.SphereGeometry(size, 64, 64);
       }
     }
-  }, [scene, size, setPlanetObj, setPlanetObj2, stopOrbits]);
-  function updateOrbit(mesh, orbit, delta) {
-    if (orbit?.angle) orbit.angle += orbit.speed * delta;
+  }, []);
+  function updateOrbit(mesh, orbit, delta, orbitCenter) {
+    if (orbit?.angle !== undefined) {
+      orbit.angle += orbit.speed * delta;
+    }
 
     if (orbit?.radius) {
       const x = orbit.radius * Math.cos(orbit.angle);
       const z = orbit.radius * Math.sin(orbit.angle);
-      mesh.position.set(x, 0, z);
-      // rotation propre de la planète
+
+      mesh.position.set(orbitCenter.x + x, orbitCenter.y, orbitCenter.z + z);
+
       mesh.rotation.y += rotation;
-      // inclinaison du plan orbital (optionnelle)
       mesh.rotation.z = orbit.inclination;
     }
   }
@@ -185,7 +188,7 @@ export const Planet = ({
     // planetRef.current.rotation.y = time * rotation;
     if (!stopOrbits) {
       planetRef.current.rotation.y += rotation;
-      updateOrbit(planetRef.current, orbit, 1);
+      updateOrbit(planetRef.current, orbit, 1, orbitCenter);
     }
     // planet.rotation.x += 0.01; // bascule
     // planet.rotation.y += 0.01; // spin

@@ -12,6 +12,7 @@ import { FlyMode } from "./components/FlyMode";
 import { Pointer } from "./components/Pointer";
 import { utils } from "./utils/utils";
 import "./App.css";
+import { System } from "./components/WholeSystem";
 
 export default function App() {
   const mountRef = useRef(null);
@@ -58,9 +59,9 @@ export default function App() {
       20000,
     );
     camera.position.set(
-      utils.randomBetween(-70, 100),
-      utils.randomBetween(-70, 100),
-      utils.randomBetween(40, 40),
+      utils.randomBetween(-500, 100),
+      utils.randomBetween(-500, 100),
+      utils.randomBetween(200, 200),
     );
     setCamera(camera);
 
@@ -116,7 +117,7 @@ export default function App() {
      ========================= */
   useEffect(() => {
     if (blackHolesRef.current.length === 0) {
-      const count = utils.randomBetween(1, 10);
+      const count = utils.randomBetween(1, 20);
       blackHolesRef.current = Array.from({ length: count }).map(() => ({
         color1: new THREE.Color(utils.getRandomHexColor()),
         color2: new THREE.Color(utils.getRandomHexColor()),
@@ -257,27 +258,11 @@ export default function App() {
 
       {scene && (
         <>
-          {universe?.map((p) => (
-            <Planet
-              key={p.name}
-              name={p.name}
-              position={{ x: p.x, y: p.y, z: p.z }}
-              rotation={p.rotation}
-              size={p.size}
-              texture={p.texture}
-              color={p.color}
-              orbit={p.orbit}
-              hasRing={p.hasRing}
-            />
-          ))}
-
-          <Planet
-            name="sun"
-            position={{ x: 0, y: 0, z: 0 }}
-            rotation={-0.001}
-            size={5}
-            texture="sun"
-          />
+          <System x={0} y={0} z={0} />
+          {/* <System x={200} y={10} z={200} /> */}
+          <System x={-200} y={100} z={-200} />
+          {/* <System x={-100} y={-20} z={-100} /> */}
+          <System x={-500} y={-100} z={-500} />
 
           {blackHolesRef.current.map((bh, index) => (
             <BlackHole
