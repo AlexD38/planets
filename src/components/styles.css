@@ -147,6 +147,13 @@
   white-space: nowrap;
 }
 
+.planet-label-sun {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(28, 20, 6, 0.72);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.2);
+}
+
 /* ── System minimap ── */
 
 .system-minimap {

@@ -15,6 +15,7 @@ export const System = ({
   asteroidBelt,
   comets,
   stellarType,
+  sunName,
 }) => {
   const sunSize = useMemo(() => utils.randomBetween(10, 40), []);
   const sunRotation = useMemo(() => utils.randomBetween(-0.005, 0.005), []);
@@ -53,6 +54,12 @@ export const System = ({
 
       <Planet
         name="sun"
+        type="star"
+        planetData={{
+          planetId: "sun",
+          name: sunName,
+          type: "star",
+        }}
         position={{ x, y, z }}
         rotation={sunRotation}
         size={sunSize}
@@ -68,6 +75,7 @@ export const System = ({
           comet={comet}
           orbitCenter={orbitCenter}
           sunPosition={sunPosition}
+          planets={planets}
         />
       ))}
 

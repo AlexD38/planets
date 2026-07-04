@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { PlanetContext } from "../context/PlanetContext";
 import { utils } from "../utils/utils";
+import { enableBloomLayer } from "../utils/bloomLayer";
 
 function disposeObject(obj) {
   if (!obj) return;
@@ -12,6 +13,34 @@ function disposeObject(obj) {
       child.material.dispose();
     }
   });
+}
+
+function addDustCloud(group, sunSize, count) {
+  const dustPositions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = utils.randomBetween(sunSize * 3, sunSize * 15);
+    dustPositions[i * 3] = Math.cos(angle) * radius;
+    dustPositions[i * 3 + 1] = (Math.random() - 0.5) * sunSize;
+    dustPositions[i * 3 + 2] = Math.sin(angle) * radius;
+  }
+  const dustGeometry = new THREE.BufferGeometry();
+  dustGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(dustPositions, 3),
+  );
+  group.add(
+    new THREE.Points(
+      dustGeometry,
+      new THREE.PointsMaterial({
+        color: 0x888899,
+        size: 0.8,
+        transparent: true,
+        opacity: 0.4,
+        depthWrite: false,
+      }),
+    ),
+  );
 }
 
 export const StellarObjects = ({ stellarType, orbitCenter, sunSize }) => {
@@ -35,34 +64,34 @@ export const StellarObjects = ({ stellarType, orbitCenter, sunSize }) => {
       );
       companion.position.set(sunSize * 2.5, 0, 0);
       group.add(companion);
+      addDustCloud(group, sunSize, 80);
     }
 
-    const dustCount = 80;
-    const dustPositions = new Float32Array(dustCount * 3);
-    for (let i = 0; i < dustCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = utils.randomBetween(sunSize * 3, sunSize * 15);
-      dustPositions[i * 3] = Math.cos(angle) * radius;
-      dustPositions[i * 3 + 1] = (Math.random() - 0.5) * sunSize;
-      dustPositions[i * 3 + 2] = Math.sin(angle) * radius;
+    if (stellarType === "pulsar") {
+      const beamGeometry = new THREE.ConeGeometry(
+        sunSize * 0.3,
+        sunSize * 8,
+        8,
+        1,
+        true,
+      );
+      const beamMaterial = new THREE.MeshBasicMaterial({
+        color: 0x88ccff,
+        transparent: true,
+        opacity: 0.35,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const beam1 = new THREE.Mesh(beamGeometry, beamMaterial);
+      beam1.rotation.x = Math.PI / 2;
+      const beam2 = beam1.clone();
+      beam2.rotation.x = -Math.PI / 2;
+      enableBloomLayer(beam1);
+      enableBloomLayer(beam2);
+      group.add(beam1, beam2);
+      addDustCloud(group, sunSize, 800);
     }
-    const dustGeometry = new THREE.BufferGeometry();
-    dustGeometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(dustPositions, 3),
-    );
-    group.add(
-      new THREE.Points(
-        dustGeometry,
-        new THREE.PointsMaterial({
-          color: 0x888899,
-          size: 0.8,
-          transparent: true,
-          opacity: 0.35,
-          depthWrite: false,
-        }),
-      ),
-    );
 
     group.position.set(orbitCenter.x, orbitCenter.y, orbitCenter.z);
     scene.add(group);

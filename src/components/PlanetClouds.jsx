@@ -46,12 +46,15 @@ export const PlanetClouds = ({ size, parentRef, timeScale, stopOrbits }) => {
 
     const parent = parentRef.current;
     const cloudTexture = createCloudTexture();
-    const geometry = new THREE.SphereGeometry(size * 1.01, 32, 32);
+    const geometry = new THREE.SphereGeometry(size * 1.01, 64, 64);
     const material = new THREE.MeshStandardMaterial({
       map: cloudTexture,
       transparent: true,
       opacity: 0.45,
       depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     });
     const mesh = new THREE.Mesh(geometry, material);
     cloudsRef.current = mesh;

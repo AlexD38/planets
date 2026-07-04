@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { texturesArr } from "../config/config";
+import { texturesArr, configPlanetInfos } from "../config/config";
 import { utils } from "./utils";
 import * as rng from "./seededRandom";
 import {
@@ -9,15 +9,47 @@ import {
 
 export const SYSTEM_POSITIONS = [{ x: 0, y: 0, z: 0 }];
 
-function generateComets(count = 2) {
-  return Array.from({ length: count }).map(() => ({
-    semiMajorAxis: utils.randomBetween(180, 350),
-    eccentricity: utils.randomBetween(0.6, 0.92),
-    angle: rng.random() * Math.PI * 2,
-    speed: utils.randomBetween(0.0003, 0.001),
-    inclination: utils.randomBetween(-0.3, 0.3),
-    nucleusSize: utils.randomBetween(0.3, 0.8),
-  }));
+function generateSunName() {
+  const star = utils.getRandomElement(configPlanetInfos.name);
+  const letter = utils.getRandomElement(configPlanetInfos.letters);
+  const num = Math.floor(rng.random() * 900) + 100;
+  return `${star} ${letter}-${num}`;
+}
+
+function generateComets(planets) {
+  const outerRadius =
+    planets.reduce((max, p) => Math.max(max, p.orbit?.radius ?? 0), 120) + 80;
+  const count = Math.floor(utils.randomBetween(1, 3));
+
+  return Array.from({ length: count }).map((_, index) => {
+    const theta = rng.random() * Math.PI * 2;
+    const pitch = utils.randomBetween(-0.35, 0.35);
+    const dirX = Math.cos(theta) * Math.cos(pitch);
+    const dirY = Math.sin(pitch);
+    const dirZ = Math.sin(theta) * Math.cos(pitch);
+    const len = Math.hypot(dirX, dirY, dirZ) || 1;
+
+    const missRadius = utils.randomBetween(0, outerRadius * 0.45);
+    const missAngle = rng.random() * Math.PI * 2;
+    const offsetX = Math.cos(missAngle) * missRadius;
+    const offsetZ = Math.sin(missAngle) * missRadius;
+    const offsetY = utils.randomBetween(-outerRadius * 0.12, outerRadius * 0.12);
+
+    const startDist = outerRadius * 1.4;
+    const originX = offsetX - (dirX / len) * startDist;
+    const originY = offsetY - (dirY / len) * startDist;
+    const originZ = offsetZ - (dirZ / len) * startDist;
+
+    return {
+      nucleusSize: utils.randomBetween(0.25, 0.55),
+      speed: utils.randomBetween(2.5, 5.5),
+      direction: { x: dirX / len, y: dirY / len, z: dirZ / len },
+      origin: { x: originX, y: originY, z: originZ },
+      pathLength: startDist * 2.2,
+      spawnDelay: index * 140 + Math.floor(rng.random() * 90),
+      respawnCooldown: 280 + Math.floor(rng.random() * 220),
+    };
+  });
 }
 
 function generateAsteroidBelt(planets) {
@@ -35,15 +67,18 @@ function generateAsteroidBelt(planets) {
 }
 
 function pickStellarType() {
-  return rng.random() < 0.08 ? "binary" : "single";
+  const r = rng.random();
+  if (r < 0.03) return "pulsar";
+  if (r < 0.11) return "binary";
+  return "single";
 }
 
 export function generateSystemExtras(planets) {
-  const cometCount = Math.floor(utils.randomBetween(1, 2));
   return {
     asteroidBelt: generateAsteroidBelt(planets),
-    comets: generateComets(cometCount),
+    comets: generateComets(planets),
     stellarType: pickStellarType(),
+    sunName: generateSunName(),
   };
 }
 

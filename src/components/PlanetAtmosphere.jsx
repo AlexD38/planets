@@ -19,7 +19,7 @@ export const PlanetAtmosphere = ({ size, type, parentRef }) => {
     const atmosphereSize = size * 1.05;
     const parent = parentRef.current;
 
-    const geometry = new THREE.SphereGeometry(atmosphereSize, 32, 32);
+    const geometry = new THREE.SphereGeometry(atmosphereSize, 64, 64);
     const atmosphereColor = new THREE.Color(getAtmosphereColor(type));
 
     const material = new THREE.ShaderMaterial({

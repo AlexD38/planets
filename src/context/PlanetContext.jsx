@@ -26,10 +26,11 @@ export const PlanetContext = createContext();
 function buildSystems() {
   return SYSTEM_POSITIONS.map((pos) => {
     const planets = generateUniverse();
+    const extras = generateSystemExtras(planets);
     return {
       ...pos,
       planets,
-      ...generateSystemExtras(planets),
+      ...extras,
     };
   });
 }
@@ -38,12 +39,16 @@ function buildStateFromSeed(seedInput) {
   const seed = setSeed(seedInput);
   const systems = buildSystems();
   const aggregated = aggregateSystems(systems.map((s) => s.planets));
+  const sunName = systems[0]?.sunName;
+  const systemInfos = aggregated
+    ? { ...aggregated, name: sunName ?? aggregated.name }
+    : null;
   return {
     seed,
     systems,
-    systemInfos: aggregated,
-    planetInfos: aggregated
-      ? { ...utils.generatePlanetInfos(), name: aggregated.name }
+    systemInfos,
+    planetInfos: systemInfos
+      ? { ...utils.generatePlanetInfos(), name: systemInfos.name }
       : utils.generatePlanetInfos(),
   };
 }

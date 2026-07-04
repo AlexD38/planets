@@ -444,6 +444,7 @@ export default function App() {
               asteroidBelt={system.asteroidBelt}
               comets={system.comets}
               stellarType={system.stellarType}
+              sunName={system.sunName}
             />
           ))}
 

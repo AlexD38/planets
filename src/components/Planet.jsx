@@ -138,36 +138,42 @@ export const Planet = ({
     }
 
     if (cityLights && name !== "sun") {
-      const lightsGeometry = new THREE.SphereGeometry(size * 1.001, 32, 32);
+      const lightsGeometry = new THREE.SphereGeometry(size * 1.003, 64, 64);
       const lightsMaterial = new THREE.ShaderMaterial({
         uniforms: {
           sunPosition: { value: new THREE.Vector3(orbitCenter.x, orbitCenter.y, orbitCenter.z) },
         },
         vertexShader: `
-          varying vec3 vNormal;
+          varying vec3 vWorldNormal;
           varying vec3 vWorldPos;
           void main() {
-            vNormal = normalize(normalMatrix * normal);
             vec4 worldPos = modelMatrix * vec4(position, 1.0);
             vWorldPos = worldPos.xyz;
+            vWorldNormal = normalize(mat3(modelMatrix) * normal);
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
         `,
         fragmentShader: `
           uniform vec3 sunPosition;
-          varying vec3 vNormal;
+          varying vec3 vWorldNormal;
           varying vec3 vWorldPos;
           void main() {
             vec3 toSun = normalize(sunPosition - vWorldPos);
-            float nightSide = step(dot(vNormal, toSun), 0.0);
-            float city = fract(sin(dot(vWorldPos.xz, vec2(12.9898, 78.233))) * 43758.5453);
-            city = step(0.92, city) * nightSide;
-            gl_FragColor = vec4(1.0, 0.9, 0.5, city * 0.8);
+            float nightSide = 1.0 - smoothstep(-0.12, 0.04, dot(vWorldNormal, toSun));
+            if (nightSide < 0.01) discard;
+            float city = fract(sin(dot(vWorldPos * 0.35, vec2(12.9898, 78.233))) * 43758.5453);
+            city = step(0.94, city) * nightSide;
+            if (city < 0.01) discard;
+            gl_FragColor = vec4(1.0, 0.9, 0.5, city * 0.7);
           }
         `,
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
+        depthTest: true,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
       });
       const lightsMesh = new THREE.Mesh(lightsGeometry, lightsMaterial);
       cityLightsRef.current = lightsMesh;
