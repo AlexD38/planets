@@ -445,6 +445,7 @@ export default function App() {
               comets={system.comets}
               stellarType={system.stellarType}
               sunName={system.sunName}
+              sunSize={system.sunSize}
             />
           ))}
 

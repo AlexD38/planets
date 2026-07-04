@@ -99,6 +99,39 @@
   font-size: 0.75rem;
 }
 
+.scan-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.scan-section + .scan-section {
+  padding-top: 0.15rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.planet-infos-row {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 42%) 1fr;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.3rem;
+  align-items: baseline;
+}
+
+.planet-infos-row-label {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.planet-infos-row-value {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+
 .planet-infos-actions {
   display: flex;
   flex-wrap: wrap;

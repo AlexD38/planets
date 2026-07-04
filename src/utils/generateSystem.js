@@ -9,6 +9,16 @@ import {
 
 export const SYSTEM_POSITIONS = [{ x: 0, y: 0, z: 0 }];
 
+export const SUN_SIZE_MIN = 18;
+export const SUN_SIZE_MAX = 24;
+export const PLANET_SIZE_MIN = 0.4;
+export const PLANET_SIZE_MAX = 2.5;
+export const ORBIT_GAP_MIN = 14;
+export const ORBIT_GAP_MAX = 20;
+
+const ASTEROID_COMPOSITIONS = ["Metallic", "Carbonaceous", "Rocky", "Icy"];
+const BELT_ROTATION_SPEED = 0.00005;
+
 function generateSunName() {
   const star = utils.getRandomElement(configPlanetInfos.name);
   const letter = utils.getRandomElement(configPlanetInfos.letters);
@@ -16,7 +26,11 @@ function generateSunName() {
   return `${star} ${letter}-${num}`;
 }
 
-function generateComets(planets) {
+export function computeFirstOrbitRadius(sunSize) {
+  return sunSize * 2.8 + utils.randomBetween(12, 20);
+}
+
+function generateComets(planets, sunSize) {
   const outerRadius =
     planets.reduce((max, p) => Math.max(max, p.orbit?.radius ?? 0), 120) + 80;
   const count = Math.floor(utils.randomBetween(1, 3));
@@ -41,13 +55,53 @@ function generateComets(planets) {
     const originZ = offsetZ - (dirZ / len) * startDist;
 
     return {
-      nucleusSize: utils.randomBetween(0.25, 0.55),
+      nucleusSize: utils.randomBetween(0.18, 0.42),
       speed: utils.randomBetween(2.5, 5.5),
       direction: { x: dirX / len, y: dirY / len, z: dirZ / len },
       origin: { x: originX, y: originY, z: originZ },
       pathLength: startDist * 2.2,
       spawnDelay: index * 140 + Math.floor(rng.random() * 90),
       respawnCooldown: 280 + Math.floor(rng.random() * 220),
+      outerRadius,
+      sunSize,
+    };
+  });
+}
+
+function generateMajorAsteroids(belt) {
+  const count = Math.floor(utils.randomBetween(3, 6));
+  const usedNames = new Set();
+
+  return Array.from({ length: count }, (_, index) => {
+    let name;
+    do {
+      const base = utils.getRandomElement(configPlanetInfos.name);
+      const suffix = Math.floor(rng.random() * 900) + 100;
+      name = `${base} ${utils.getRandomElement(configPlanetInfos.letters)}-${suffix}`;
+    } while (usedNames.has(name));
+    usedNames.add(name);
+
+    const composition = utils.getRandomElement(ASTEROID_COMPOSITIONS);
+    const size = utils.randomBetween(0.7, 2.4);
+
+    return {
+      planetId: `asteroid-${index}-${name.replace(/\s+/g, "-")}`,
+      name,
+      type: "Asteroid",
+      composition,
+      size,
+      gravity: utils.getRandomElement(configPlanetInfos.gravity),
+      temperature: Math.floor(utils.randomBetween(-210, 60)),
+      inhabited: false,
+      intelligenceFormsDetected: false,
+      cabronDetected: composition === "Carbonaceous" || rng.random() > 0.55,
+      orbit: {
+        angle: rng.random() * Math.PI * 2,
+        radius: utils.randomBetween(belt.innerRadius, belt.outerRadius),
+        speed: BELT_ROTATION_SPEED,
+        inclination: utils.randomBetween(-0.08, 0.08),
+      },
+      yOffset: utils.randomBetween(-2.5, 2.5),
     };
   });
 }
@@ -59,11 +113,15 @@ function generateAsteroidBelt(planets) {
   const inner = planets[mid - 1]?.orbit?.radius ?? 70;
   const outer = planets[mid]?.orbit?.radius ?? 90;
 
-  return {
+  const belt = {
     innerRadius: inner + 5,
     outerRadius: outer - 5,
     count: Math.floor(utils.randomBetween(600, 1200)),
+    rotationSpeed: BELT_ROTATION_SPEED,
   };
+
+  belt.majorAsteroids = generateMajorAsteroids(belt);
+  return belt;
 }
 
 function pickStellarType() {
@@ -73,20 +131,21 @@ function pickStellarType() {
   return "single";
 }
 
-export function generateSystemExtras(planets) {
+export function generateSystemExtras(planets, sunSize) {
   return {
     asteroidBelt: generateAsteroidBelt(planets),
-    comets: generateComets(planets),
+    comets: generateComets(planets, sunSize),
     stellarType: pickStellarType(),
     sunName: generateSunName(),
+    sunSize,
   };
 }
 
 export function generateUniverse({
   baseRadius = 50,
-  orbitGap = 20,
-  minPlanets = 3,
-  maxPlanets = 15,
+  orbitGap = 18,
+  minPlanets = 2,
+  maxPlanets = 5,
 } = {}) {
   const needCustomColor = Math.floor(rng.random() * 2) === 0;
   const planetsToGenerate = Math.floor(utils.randomBetween(minPlanets, maxPlanets));
@@ -96,7 +155,7 @@ export function generateUniverse({
   const MIN_SPEED = 0.0001;
 
   for (let index = 0; index < planetsToGenerate; index++) {
-    const size = utils.randomBetween(0.5, 4);
+    const size = utils.randomBetween(PLANET_SIZE_MIN, PLANET_SIZE_MAX);
     const texture = utils.getRandomElement(texturesArr);
     const orbitRadius = baseRadius + index * orbitGap;
     const angle = rng.random() * Math.PI * 2;
@@ -147,7 +206,7 @@ export function createPlanet({
   index = 0,
   needCustomColor = false,
 } = {}) {
-  const size = utils.randomBetween(0.5, 4);
+  const size = utils.randomBetween(PLANET_SIZE_MIN, PLANET_SIZE_MAX);
   const texture = utils.getRandomElement(texturesArr);
   const angle = rng.random() * Math.PI * 2;
   const speed = THREE.MathUtils.lerp(0.006, 0.0001, index / 20);

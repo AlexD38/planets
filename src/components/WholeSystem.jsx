@@ -2,10 +2,10 @@ import { useMemo, Fragment } from "react";
 import "./styles.css";
 import { Planet } from "./Planet";
 import { AsteroidBelt } from "./AsteroidBelt";
+import { MajorAsteroid } from "./MajorAsteroid";
 import { Comet } from "./Comet";
 import { OrbitPath } from "./OrbitPath";
 import { StellarObjects } from "./StellarObjects";
-import { utils } from "../utils/utils";
 
 export const System = ({
   x,
@@ -16,11 +16,17 @@ export const System = ({
   comets,
   stellarType,
   sunName,
+  sunSize = 20,
 }) => {
-  const sunSize = useMemo(() => utils.randomBetween(10, 40), []);
-  const sunRotation = useMemo(() => utils.randomBetween(-0.005, 0.005), []);
+  const sunRotation = useMemo(() => Math.random() * 0.01 - 0.005, []);
   const orbitCenter = useMemo(() => ({ x, y, z }), [x, y, z]);
   const sunPosition = useMemo(() => ({ x, y, z }), [x, y, z]);
+  const systemOuterRadius = useMemo(
+    () =>
+      planets.reduce((max, p) => Math.max(max, p.orbit?.radius ?? 0), sunSize * 4) +
+      80,
+    [planets, sunSize],
+  );
 
   return (
     <>
@@ -66,7 +72,16 @@ export const System = ({
         texture="sun"
       />
       {asteroidBelt && (
-        <AsteroidBelt belt={asteroidBelt} orbitCenter={orbitCenter} />
+        <>
+          <AsteroidBelt belt={asteroidBelt} orbitCenter={orbitCenter} />
+          {asteroidBelt.majorAsteroids?.map((asteroid) => (
+            <MajorAsteroid
+              key={asteroid.planetId}
+              asteroid={asteroid}
+              orbitCenter={orbitCenter}
+            />
+          ))}
+        </>
       )}
 
       {comets?.map((comet, i) => (
@@ -76,6 +91,8 @@ export const System = ({
           orbitCenter={orbitCenter}
           sunPosition={sunPosition}
           planets={planets}
+          sunSize={sunSize}
+          systemOuterRadius={systemOuterRadius}
         />
       ))}
 

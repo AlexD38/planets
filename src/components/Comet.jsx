@@ -29,10 +29,18 @@ function getNearestPlanetDistance(cometPos, planets, orbitCenter) {
   return minDist;
 }
 
-export const Comet = ({ comet, orbitCenter, sunPosition, planets = [] }) => {
+export const Comet = ({
+  comet,
+  orbitCenter,
+  sunPosition,
+  planets = [],
+  sunSize = 20,
+  systemOuterRadius = 200,
+}) => {
   const { scene, timeScale, stopOrbits } = useContext(PlanetContext);
   const groupRef = useRef(null);
   const tailRef = useRef(null);
+  const dustTailRef = useRef(null);
   const nucleusRef = useRef(null);
   const stateRef = useRef({
     progress: 0,
@@ -59,27 +67,32 @@ export const Comet = ({ comet, orbitCenter, sunPosition, planets = [] }) => {
     enableBloomLayer(nucleus);
     group.add(nucleus);
 
-    const tailCount = 48;
-    const tailPositions = new Float32Array(tailCount * 3);
-    const tailGeometry = new THREE.BufferGeometry();
-    tailGeometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(tailPositions, 3),
-    );
-    const tailMaterial = new THREE.PointsMaterial({
-      color: 0x88ccff,
-      size: 2.2,
-      transparent: true,
-      opacity: 0,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      toneMapped: false,
-      sizeAttenuation: true,
-    });
-    const tail = new THREE.Points(tailGeometry, tailMaterial);
-    tailRef.current = tail;
-    enableBloomLayer(tail);
-    group.add(tail);
+    const tailCount = 80;
+    const createTail = (color, baseSize) => {
+      const positions = new Float32Array(tailCount * 3);
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color,
+        size: baseSize,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+        sizeAttenuation: true,
+      });
+      const points = new THREE.Points(geometry, material);
+      enableBloomLayer(points);
+      return points;
+    };
+
+    const ionTail = createTail(0x88ccff, 2.4);
+    const dustTail = createTail(0xd4c4a0, 3.2);
+    tailRef.current = ionTail;
+    dustTailRef.current = dustTail;
+    group.add(ionTail);
+    group.add(dustTail);
 
     scene.add(group);
 
@@ -95,6 +108,11 @@ export const Comet = ({ comet, orbitCenter, sunPosition, planets = [] }) => {
       comet.origin.z + orbitCenter.z,
     );
     const tailDir = new THREE.Vector3();
+    const awayFromSun = new THREE.Vector3();
+    const binormal = new THREE.Vector3();
+    const spreadAxis = new THREE.Vector3();
+
+    const heatFalloff = Math.max(systemOuterRadius * 0.85, sunSize * 12, 120);
 
     let frameId;
     const animate = () => {
@@ -124,34 +142,57 @@ export const Comet = ({ comet, orbitCenter, sunPosition, planets = [] }) => {
         return;
       }
 
-      tailDir.copy(direction).negate();
+      awayFromSun.copy(pos).sub(sunVec).normalize();
+      tailDir.copy(awayFromSun);
+
+      spreadAxis.set(direction.y, -direction.x, direction.z * 0.35).normalize();
+      binormal.crossVectors(tailDir, spreadAxis).normalize();
 
       const distToSun = pos.distanceTo(sunVec);
-      const sunHeat = THREE.MathUtils.clamp(1 - (distToSun - 50) / 320, 0, 1);
+      const sunHeat = THREE.MathUtils.clamp(1 - distToSun / heatFalloff, 0, 1);
       const nearestPlanet = getNearestPlanetDistance(pos, planets, orbitCenter);
-      const planetFade = THREE.MathUtils.smoothstep(nearestPlanet, 12, 55);
-      const tailIntensity = sunHeat * planetFade;
-      const tailLength = 22 + tailIntensity * 50;
+      const planetFade = THREE.MathUtils.smoothstep(nearestPlanet, 8, 45);
+      const tailIntensity = sunHeat * sunHeat * planetFade;
 
-      groupRef.current.visible = tailIntensity > 0.02;
+      const ionLength = 18 + sunHeat * sunHeat * 140;
+      const dustLength = 28 + sunHeat * sunHeat * 95;
+      const dustSpread = 1.5 + sunHeat * 8;
+
+      groupRef.current.visible = tailIntensity > 0.015;
+
+      const updateTailPoints = (points, length, spread, curveBias) => {
+        const positions = points.geometry.attributes.position.array;
+        for (let i = 0; i < tailCount; i++) {
+          const t = i / (tailCount - 1);
+          const falloff = (1 - t) * (1 - t);
+          const along = t * length * falloff;
+          const wave = Math.sin(t * 11.3 + state.progress * 0.04) * spread * t;
+          const lateral =
+            Math.sin(i * 2.17 + curveBias) * spread * t * t +
+            Math.cos(i * 1.43) * spread * 0.35 * t;
+          positions[i * 3] =
+            tailDir.x * along + binormal.x * lateral + spreadAxis.x * wave;
+          positions[i * 3 + 1] =
+            tailDir.y * along + binormal.y * lateral + spreadAxis.y * wave;
+          positions[i * 3 + 2] =
+            tailDir.z * along + binormal.z * lateral + spreadAxis.z * wave;
+        }
+        points.geometry.attributes.position.needsUpdate = true;
+        points.material.opacity = tailIntensity * (curveBias > 0 ? 0.55 : 0.9);
+        points.material.size =
+          (curveBias > 0 ? 1.4 : 1.1) + tailIntensity * (curveBias > 0 ? 2.8 : 2.4);
+      };
 
       if (tailRef.current) {
-        const positions = tailRef.current.geometry.attributes.position.array;
-        for (let i = 0; i < tailCount; i++) {
-          const t = i / tailCount;
-          const falloff = 1 - t * t;
-          positions[i * 3] = tailDir.x * t * tailLength * falloff;
-          positions[i * 3 + 1] = tailDir.y * t * tailLength * falloff;
-          positions[i * 3 + 2] = tailDir.z * t * tailLength * falloff;
-        }
-        tailRef.current.geometry.attributes.position.needsUpdate = true;
-        tailRef.current.material.opacity = tailIntensity * 0.85;
-        tailRef.current.material.size = 1.2 + tailIntensity * 2.2;
+        updateTailPoints(tailRef.current, ionLength, dustSpread * 0.25, 0);
+      }
+      if (dustTailRef.current) {
+        updateTailPoints(dustTailRef.current, dustLength, dustSpread, 1.7);
       }
 
       if (nucleusRef.current) {
-        nucleusRef.current.material.opacity = 0.25 + tailIntensity * 0.75;
-        nucleusRef.current.visible = tailIntensity > 0.02;
+        nucleusRef.current.material.opacity = 0.2 + tailIntensity * 0.8;
+        nucleusRef.current.visible = tailIntensity > 0.015;
       }
 
       frameId = requestAnimationFrame(animate);
@@ -165,7 +206,17 @@ export const Comet = ({ comet, orbitCenter, sunPosition, planets = [] }) => {
       groupRef.current = null;
       stateRef.current = { progress: 0, wait: comet.spawnDelay ?? 0 };
     };
-  }, [scene, comet, orbitCenter, sunPosition, planets, timeScale, stopOrbits]);
+  }, [
+    scene,
+    comet,
+    orbitCenter,
+    sunPosition,
+    planets,
+    sunSize,
+    systemOuterRadius,
+    timeScale,
+    stopOrbits,
+  ]);
 
   return null;
 };

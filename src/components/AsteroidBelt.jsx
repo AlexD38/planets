@@ -56,7 +56,7 @@ export const AsteroidBelt = ({ belt, orbitCenter }) => {
     let frameId;
     const animate = () => {
       if (!stopOrbits && beltRef.current) {
-        angleRef.current += 0.00005 * timeScale;
+        angleRef.current += (belt.rotationSpeed ?? 0.00005) * timeScale;
         beltRef.current.rotation.y = angleRef.current;
       }
       frameId = requestAnimationFrame(animate);

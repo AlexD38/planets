@@ -1,7 +1,29 @@
-import { useContext, useEffect, useRef, useState, useCallback } from "react";
+import { useContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { PlanetContext } from "./context/PlanetContext";
+import {
+  buildPlanetScanSections,
+  buildSystemScanSections,
+} from "./utils/scanDetails";
 import "./styles.css";
 import Typewriter from "typewriter-effect/dist/core";
+
+function ScanSections({ sections }) {
+  return (
+    <div className="scan-sections">
+      {sections.map((section) => (
+        <div key={section.title} className="scan-section">
+          <div className="planet-infos-infos">{section.title}</div>
+          {section.rows.map((entry) => (
+            <div key={`${section.title}-${entry.label}`} className="planet-infos-row">
+              <span className="planet-infos-row-label">{entry.label}</span>
+              <span className="planet-infos-row-value">{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const PlanetInfos = () => {
   const {
@@ -9,6 +31,7 @@ export const PlanetInfos = () => {
     planetInfos,
     selectedPlanet,
     planetInfosDisplay,
+    systems,
   } = useContext(PlanetContext);
   const typewriterRef = useRef(null);
   const typewriterInstanceRef = useRef(null);
@@ -20,6 +43,26 @@ export const PlanetInfos = () => {
   const activePlanet = selectedPlanet ?? planetInfos;
   const activePlanetKey =
     selectedPlanet?.planetId ?? planetInfos?.name ?? "system";
+  const currentSystem = systems?.[0];
+
+  const detailSections = useMemo(() => {
+    if (selectedPlanet) {
+      return buildPlanetScanSections(selectedPlanet);
+    }
+    return buildSystemScanSections(currentSystem, systemInfos);
+  }, [selectedPlanet, currentSystem, systemInfos]);
+
+  const scanTitle = selectedPlanet?.type === "Asteroid"
+    ? "Scan astéroïde"
+    : selectedPlanet
+      ? "Scan planétaire"
+      : "Scan système";
+
+  const detailTitle = selectedPlanet?.type === "Asteroid"
+    ? "Fiche astéroïde"
+    : selectedPlanet
+      ? "Fiche planète"
+      : "Fiche système";
 
   const handleShowDetails = useCallback(() => {
     if (!typewriterInstanceRef.current) {
@@ -30,7 +73,7 @@ export const PlanetInfos = () => {
     setLoadingDetails(true);
     typewriterInstanceRef.current
       .typeString("<br>")
-      .typeString("Loading data")
+      .typeString("Décompression des données")
       .pauseFor(200)
       .typeString(".")
       .pauseFor(200)
@@ -72,8 +115,22 @@ export const PlanetInfos = () => {
 
     typewriterInstanceRef.current = typewriter;
 
+    const scanLabel =
+      selectedPlanet?.type === "Asteroid"
+        ? "Scan astéroïde"
+        : selectedPlanet
+          ? "Scan planétaire"
+          : "Scan système";
+
+    const targetLabel =
+      selectedPlanet?.type === "Asteroid"
+        ? "Cible : "
+        : selectedPlanet
+          ? "Planète : "
+          : "Système : ";
+
     typewriter
-      .typeString(selectedPlanet ? "Planet scan" : "Scanning System")
+      .typeString(scanLabel)
       .pauseFor(200)
       .typeString(".")
       .pauseFor(200)
@@ -81,11 +138,11 @@ export const PlanetInfos = () => {
       .pauseFor(200)
       .typeString(".")
       .pauseFor(800)
-      .typeString("Data acquired.")
+      .typeString(" Données acquises.")
       .pauseFor(500)
       .typeString("<br>")
-      .typeString(selectedPlanet ? "Planet : " : "System name : ")
-      .pauseFor(500)
+      .typeString(targetLabel)
+      .pauseFor(400)
       .typeString(`${activePlanet.name}.`)
       .pauseFor(400)
       .callFunction(() => setScanDone(true))
@@ -102,7 +159,7 @@ export const PlanetInfos = () => {
         <div className="planet-infos-container hud-panel">
           <div className="hud-panel-header">
             <i className="fa-solid fa-satellite-dish" />
-            {selectedPlanet ? "Scan planétaire" : "Scan système"}
+            {scanTitle}
           </div>
           <div ref={typewriterRef} />
           {scanDone && !dismissed && !loadingDetails && (
@@ -129,64 +186,9 @@ export const PlanetInfos = () => {
         <div className="planet-infos-container hud-panel">
           <div className="hud-panel-header">
             <i className="fa-solid fa-database" />
-            {selectedPlanet ? "Fiche planète" : "Fiche système"}
+            {detailTitle}
           </div>
-          {selectedPlanet ? (
-            <>
-              <div className="planet-infos-infos">Planet scan :</div>
-              <div className="planet-infos-name">Name : &quot;{selectedPlanet.name}&quot;</div>
-              <div className="planet-infos-type">Type : {selectedPlanet.type}</div>
-              <div className="planet-infos-gravity">
-                Gravity : {selectedPlanet.gravity}
-              </div>
-              <div className="planet-infos-cabronDetected">
-                Temperature : {selectedPlanet.temperature}°C
-              </div>
-              <div className="planet-infos-inhabited">
-                Inhabited : {selectedPlanet.inhabited ? "yes" : "no"}
-              </div>
-              <div className="planet-infos-comments">
-                Intelligence :{" "}
-                {selectedPlanet.intelligenceFormsDetected ? "detected" : "none"}
-              </div>
-            </>
-          ) : (
-            systemInfos && (
-              <>
-                <div className="planet-infos-infos">Infos :</div>
-                <div className="planet-infos-name">
-                  Name : &quot;{systemInfos.name}&quot;
-                </div>
-                <div className="planet-infos-name">
-                  {systemInfos.numberOfPlanets} planets detected
-                </div>
-                <div className="planet-infos-type">
-                  Types : {systemInfos.planetTypes.join(", ")}
-                </div>
-                <div className="planet-infos-cabronDetected">
-                  {activePlanet.cabronDetected
-                    ? "Carbon detected"
-                    : "No Carbon detected"}
-                </div>
-                <br />
-                <div className="planet-infos-gravity">
-                  Life detected : {systemInfos.lifeDetected ? "yes" : "none"}
-                </div>
-                {"_".repeat(40)}
-                <br />
-                <br />
-                <div className="planet-infos-comments">Comments : </div>
-                {systemInfos.infos && (
-                  <div className="planet-infos-inhabited">{systemInfos.infos}</div>
-                )}
-                {systemInfos.comments?.map((comment, index) => (
-                  <div key={index} className="planet-infos-cabronDetected">
-                    {comment}
-                  </div>
-                ))}
-              </>
-            )
-          )}
+          <ScanSections sections={detailSections} />
           <div className="planet-infos-actions">
             <button
               type="button"

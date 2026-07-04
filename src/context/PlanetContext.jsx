@@ -13,6 +13,11 @@ import {
   createPlanet,
   aggregateSystems,
   SYSTEM_POSITIONS,
+  computeFirstOrbitRadius,
+  ORBIT_GAP_MIN,
+  ORBIT_GAP_MAX,
+  SUN_SIZE_MIN,
+  SUN_SIZE_MAX,
 } from "../utils/generateSystem";
 import { getOrbitPosition } from "../utils/orbit";
 import {
@@ -25,11 +30,15 @@ export const PlanetContext = createContext();
 
 function buildSystems() {
   return SYSTEM_POSITIONS.map((pos) => {
-    const planets = generateUniverse();
-    const extras = generateSystemExtras(planets);
+    const sunSize = utils.randomBetween(SUN_SIZE_MIN, SUN_SIZE_MAX);
+    const orbitGap = utils.randomBetween(ORBIT_GAP_MIN, ORBIT_GAP_MAX);
+    const baseRadius = computeFirstOrbitRadius(sunSize);
+    const planets = generateUniverse({ baseRadius, orbitGap });
+    const extras = generateSystemExtras(planets, sunSize);
     return {
       ...pos,
       planets,
+      orbitGap,
       ...extras,
     };
   });
@@ -138,10 +147,11 @@ export const PlanetProvider = ({ children }) => {
 
       const maxRadius = current.planets.reduce(
         (max, p) => Math.max(max, p.orbit?.radius ?? 0),
-        50,
+        computeFirstOrbitRadius(current.sunSize ?? SUN_SIZE_MIN),
       );
+      const gap = current.orbitGap ?? utils.randomBetween(ORBIT_GAP_MIN, ORBIT_GAP_MAX);
       newPlanet = createPlanet({
-        orbitRadius: maxRadius + 20,
+        orbitRadius: maxRadius + gap,
         index: current.planets.length,
       });
       updatedPlanets = [...current.planets, newPlanet];
