@@ -1,12 +1,68 @@
-import { createContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { utils } from "../utils/utils";
-import { texturesArr } from "../config/config";
-import * as THREE from "three";
+import {
+  generateUniverse,
+  generateSystemExtras,
+  createPlanet,
+  aggregateSystems,
+  SYSTEM_POSITIONS,
+} from "../utils/generateSystem";
+import { getOrbitPosition } from "../utils/orbit";
+import {
+  setSeed,
+  getSeedFromUrl,
+  createRandomSeed,
+} from "../utils/seededRandom";
 
 export const PlanetContext = createContext();
 
+function buildSystems() {
+  return SYSTEM_POSITIONS.map((pos) => {
+    const planets = generateUniverse();
+    return {
+      ...pos,
+      planets,
+      ...generateSystemExtras(planets),
+    };
+  });
+}
+
+function buildStateFromSeed(seedInput) {
+  const seed = setSeed(seedInput);
+  const systems = buildSystems();
+  const aggregated = aggregateSystems(systems.map((s) => s.planets));
+  return {
+    seed,
+    systems,
+    systemInfos: aggregated,
+    planetInfos: aggregated
+      ? { ...utils.generatePlanetInfos(), name: aggregated.name }
+      : utils.generatePlanetInfos(),
+  };
+}
+
+function getInitialState() {
+  const urlSeed = getSeedFromUrl();
+  const seed = urlSeed != null ? urlSeed : createRandomSeed();
+  return buildStateFromSeed(seed);
+}
+
 export const PlanetProvider = ({ children }) => {
-  const [planetInfos, setPlanetInfos] = useState(null);
+  const [initialState] = useState(getInitialState);
+  const [systems, setSystems] = useState(initialState.systems);
+
+  const selectableMeshesRef = useRef(new Map());
+
+  const [planetInfos, setPlanetInfos] = useState(initialState.planetInfos);
+  const [selectedPlanet, setSelectedPlanet] = useState(null);
+  const [flyToTarget, setFlyToTarget] = useState(null);
   const [planetObj, setPlanetObj] = useState(null);
   const [planetObj2, setPlanetObj2] = useState(null);
   const [planetSize, setPlanetSize] = useState(null);
@@ -21,12 +77,17 @@ export const PlanetProvider = ({ children }) => {
   const [stars5, setStars5] = useState(null);
   const [moons, setMoons] = useState(null);
   const [moons6, setMoons6] = useState(null);
-  const [starsNeb, setStarsNeb] = useState(null);
   const [camera, setCamera] = useState(null);
   const [renderer, setRenderer] = useState(null);
-  const [universe, setUniverse] = useState(null);
-  const [systemInfos, setSystemInfos] = useState(null);
+  const [systemInfos, setSystemInfos] = useState(initialState.systemInfos);
   const [stopOrbits, setStopOrbits] = useState(false);
+  const [timeScale, setTimeScale] = useState(1);
+  const [showOrbitPaths, setShowOrbitPaths] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
+  const [showMinimap, setShowMinimap] = useState(true);
+  const [bloomEnabled, setBloomEnabled] = useState(true);
+  const [lowQuality, setLowQuality] = useState(window.innerWidth < 768);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const [moveState, setMoveState] = useState({
     thrust: 0,
     thrustReverse: 0,
@@ -37,12 +98,114 @@ export const PlanetProvider = ({ children }) => {
     isFlyMode: false,
   });
 
-  const toggleFlyMode = () => {
+  const registerSelectable = useCallback((mesh, planetData) => {
+    selectableMeshesRef.current.set(mesh.uuid, { mesh, planetData });
+  }, []);
+
+  const unregisterSelectable = useCallback((mesh) => {
+    selectableMeshesRef.current.delete(mesh.uuid);
+  }, []);
+
+  const getSelectableMeshes = useCallback(() => {
+    return Array.from(selectableMeshesRef.current.values()).map((e) => e.mesh);
+  }, []);
+
+  const getPlanetDataFromMesh = useCallback((mesh) => {
+    return selectableMeshesRef.current.get(mesh.uuid)?.planetData ?? null;
+  }, []);
+
+  const flyToPlanet = useCallback((planet, systemIndex = 0) => {
+    if (!planet?.orbit) return;
+    const system = systems[systemIndex];
+    if (!system) return;
+    const orbitCenter = { x: system.x, y: system.y, z: system.z };
+    setSelectedPlanet(planet);
+    setFlyToTarget({ planet, orbitCenter });
+  }, [systems]);
+
+  const addPlanet = useCallback(() => {
+    let newPlanet = null;
+    let orbitCenter = null;
+    let updatedPlanets = null;
+
+    setSystems((prev) => {
+      const current = prev[0];
+      if (!current) return prev;
+
+      const maxRadius = current.planets.reduce(
+        (max, p) => Math.max(max, p.orbit?.radius ?? 0),
+        50,
+      );
+      newPlanet = createPlanet({
+        orbitRadius: maxRadius + 20,
+        index: current.planets.length,
+      });
+      updatedPlanets = [...current.planets, newPlanet];
+      orbitCenter = { x: current.x, y: current.y, z: current.z };
+
+      return [{ ...current, planets: updatedPlanets }, ...prev.slice(1)];
+    });
+
+    if (!newPlanet || !orbitCenter || !updatedPlanets) return;
+
+    setSystemInfos(aggregateSystems(updatedPlanets));
+    setSelectedPlanet(newPlanet);
+    setPlanetInfos(newPlanet);
+    setFlyToTarget({ planet: newPlanet, orbitCenter });
+  }, []);
+
+  const removePlanet = useCallback(() => {
+    if (!selectedPlanet?.planetId) return;
+
+    const planetId = selectedPlanet.planetId;
+    let updatedPlanets = null;
+
+    setSystems((prev) => {
+      const current = prev[0];
+      if (!current || current.planets.length <= 1) return prev;
+
+      updatedPlanets = current.planets.filter((p) => p.planetId !== planetId);
+      if (updatedPlanets.length === current.planets.length) return prev;
+
+      return [{ ...current, planets: updatedPlanets }, ...prev.slice(1)];
+    });
+
+    if (!updatedPlanets) return;
+
+    const aggregated = aggregateSystems(updatedPlanets);
+    setSystemInfos(aggregated);
+    setSelectedPlanet(null);
+    setFlyToTarget(null);
+    setPlanetInfos(
+      aggregated
+        ? { ...utils.generatePlanetInfos(), name: aggregated.name }
+        : utils.generatePlanetInfos(),
+    );
+  }, [selectedPlanet]);
+
+  const toggleFlyMode = useCallback(() => {
     setMoveState((prev) => ({ ...prev, isFlyMode: !prev.isFlyMode }));
-  };
+  }, []);
+
+  useEffect(() => {
+    if (selectedPlanet) {
+      setPlanetInfos(selectedPlanet);
+    }
+  }, [selectedPlanet]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      if (event.code === "Space") event.preventDefault();
+
+      if (event.code === "BracketLeft") {
+        setTimeScale((prev) => Math.max(0, prev - 0.5));
+        return;
+      }
+      if (event.code === "BracketRight") {
+        setTimeScale((prev) => Math.min(50, prev + 0.5));
+        return;
+      }
+
       setMoveState((prev) => {
         const newMoveState = { ...prev };
         switch (event.code) {
@@ -98,144 +261,135 @@ export const PlanetProvider = ({ children }) => {
       });
     };
 
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setLowQuality(mobile);
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  useEffect(() => {
-    const randomTruFalse = Date.now().toLocaleString().at(-1) % 2;
-    const needCustomColor = null;
-    const planetsToGenerate = +utils.randomBetween(3, 10).toFixed(0);
-    const generatedUniverse = [];
-
-    const BASE_RADIUS = 15; // rayon du premier cercle
-    const ORBIT_GAP = 10; // distance entre chaque orbite
-
-    const MAX_SPEED = 0.006; // vitesse max (orbite interne)
-    const MIN_SPEED = 0.0001; // vitesse min (orbite externe)
-
-    for (let index = 0; index < planetsToGenerate; index++) {
-      const size = utils.randomBetween(0.5, 4);
-      const texture = utils.getRandomElement(texturesArr);
-
-      const orbitRadius = BASE_RADIUS + index * ORBIT_GAP;
-      const angle = Math.random() * Math.PI * 1;
-
-      // facteur de distance normalisé (0 → proche, 1 → loin)
-      const t = index / Math.max(1, planetsToGenerate - 1);
-
-      // interpolation inverse : proche = rapide, loin = lent
-      const speed = THREE.MathUtils.lerp(MAX_SPEED, MIN_SPEED, t);
-      const generatedPlanet = utils.generatePlanetInfos();
-
-      const planetSettings = {
-        name: generatedPlanet?.name,
-        type: generatedPlanet?.type,
-        intelligenceFormsDetected: generatedPlanet?.intelligenceFormsDetected,
-        rotation: utils.randomBetween(-0.005, 0.005),
-
-        x: orbitRadius * Math.cos(angle),
-        y: 0,
-        z: orbitRadius * Math.sin(angle),
-
-        size,
-        texture: texture,
-        color: needCustomColor ? utils.getRandomHexColor() : 0xffffff,
-
-        orbit: {
-          angle,
-          speed,
-          radius: orbitRadius,
-          inclination: utils.randomBetween(-0.2, 0.2),
-        },
-      };
-
-      generatedUniverse.push(planetSettings);
-    }
-
-    const howManyNeedRing = utils.randomBetween(
-      0,
-      generatedUniverse.length / 3,
-    );
-
-    for (let index = 0; index < howManyNeedRing; index++) {
-      const randomIndex = Math.floor(Math.random() * generatedUniverse.length);
-      generatedUniverse[randomIndex].hasRing = true;
-    }
-
-    setUniverse(generatedUniverse);
-    const analyze = utils.analyzeUniverse(generatedUniverse);
-    setSystemInfos(analyze);
-
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const generateNewPlanet = () => {
-    const newPlanet = utils.generatePlanetInfos();
-    setPlanetInfos(newPlanet);
-    setPlanetSize(newPlanet?.size);
-  };
-
-  useEffect(() => {
-    generateNewPlanet();
-  }, []);
+  const contextValue = useMemo(
+    () => ({
+      planetInfos,
+      setPlanetInfos,
+      selectedPlanet,
+      setSelectedPlanet,
+      flyToTarget,
+      setFlyToTarget,
+      flyToPlanet,
+      addPlanet,
+      removePlanet,
+      planetSize,
+      setPlanetSize,
+      isMobile,
+      scene,
+      setScene,
+      planetObj,
+      setPlanetObj,
+      planetObj2,
+      setPlanetObj2,
+      stars1,
+      setStars1,
+      stars2,
+      setStars2,
+      stars3,
+      setStars3,
+      stars4,
+      setStars4,
+      stars5,
+      setStars5,
+      camera,
+      setCamera,
+      renderer,
+      setRenderer,
+      moons,
+      setMoons,
+      moons6,
+      setMoons6,
+      systems,
+      systemInfos,
+      planetInfosDisplay,
+      setPlanetInfosDisplay,
+      sun,
+      setSun,
+      stopOrbits,
+      setStopOrbits,
+      timeScale,
+      setTimeScale,
+      showOrbitPaths,
+      setShowOrbitPaths,
+      showLabels,
+      setShowLabels,
+      showMinimap,
+      setShowMinimap,
+      bloomEnabled,
+      setBloomEnabled,
+      lowQuality,
+      setLowQuality,
+      audioEnabled,
+      setAudioEnabled,
+      registerSelectable,
+      unregisterSelectable,
+      getSelectableMeshes,
+      getPlanetDataFromMesh,
+      moveState,
+      toggleFlyMode,
+      getOrbitPosition,
+    }),
+    [
+      planetInfos,
+      selectedPlanet,
+      flyToTarget,
+      flyToPlanet,
+      addPlanet,
+      removePlanet,
+      planetSize,
+      isMobile,
+      scene,
+      planetObj,
+      planetObj2,
+      stars1,
+      stars2,
+      stars3,
+      stars4,
+      stars5,
+      camera,
+      renderer,
+      moons,
+      moons6,
+      systems,
+      systemInfos,
+      planetInfosDisplay,
+      sun,
+      stopOrbits,
+      timeScale,
+      showOrbitPaths,
+      showLabels,
+      showMinimap,
+      bloomEnabled,
+      lowQuality,
+      audioEnabled,
+      registerSelectable,
+      unregisterSelectable,
+      getSelectableMeshes,
+      getPlanetDataFromMesh,
+      moveState,
+      toggleFlyMode,
+    ],
+  );
 
   return (
-    <PlanetContext.Provider
-      value={{
-        planetInfos,
-        generateNewPlanet,
-        planetSize,
-        setPlanetSize,
-        isMobile,
-        scene,
-        setScene,
-        planetObj,
-        setPlanetObj,
-        planetObj2,
-        setPlanetObj2,
-        stars1,
-        setStars1,
-        stars2,
-        setStars2,
-        stars3,
-        setStars3,
-        stars4,
-        setStars4,
-        stars5,
-        setStars5,
-        camera,
-        setCamera,
-        renderer,
-        setRenderer,
-        moons,
-        setMoons,
-        moons6,
-        setMoons6,
-        starsNeb,
-        setStarsNeb,
-        universe,
-        systemInfos,
-        planetInfosDisplay,
-        setPlanetInfosDisplay,
-        sun,
-        setSun,
-        stopOrbits,
-        setStopOrbits,
-        moveState,
-        toggleFlyMode,
-      }}
-    >
+    <PlanetContext.Provider value={contextValue}>
       {children}
     </PlanetContext.Provider>
   );

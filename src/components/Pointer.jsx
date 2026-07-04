@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { PlanetContext } from "../context/PlanetContext";
-import "./Pointer.css";
+import "./styles.css";
 
 // --- SVG Icons for Controls ---
 
@@ -51,13 +51,11 @@ export const Pointer = () => {
   return (
     <div className="pointer-container">
       <svg
-        width="100%"
-        height="100%"
+        className="pointer-crosshair"
         viewBox="0 0 100 100"
         fill="none"
-        stroke="chartreuse"
-        strokeWidth="2"
-        style={{ filter: "drop-shadow(0 0 3px chartreuse)" }}
+        stroke="currentColor"
+        strokeWidth="1.5"
       >
         {/* Central Circle */}
         <circle cx="50" cy="50" r="3" />

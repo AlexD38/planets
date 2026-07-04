@@ -1,8 +1,63 @@
-import { useContext, useEffect, useState, useRef, useCallback } from "react";
+import { useContext, useEffect, useRef, useCallback, useState } from "react";
 import { PlanetContext } from "../context/PlanetContext";
 import * as THREE from "three";
 import { utils } from "../utils/utils";
-import { texturesArr } from "../config/config";
+import { updateOrbit } from "../utils/orbit";
+import { getMaterialOptionsForType } from "../utils/planetVisuals";
+import { enableBloomLayer } from "../utils/bloomLayer";
+import { PlanetAtmosphere } from "./PlanetAtmosphere";
+import { PlanetClouds } from "./PlanetClouds";
+import { Moon } from "./Moon";
+import { Satellite } from "./Satellite";
+import { SunHalo } from "./SunHalo";
+
+function createRockRingBand(count, planetSize, radiusMin, radiusMax, angleSteps) {
+  const geometry = new THREE.DodecahedronGeometry(0.05, 0);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xc4b5a0,
+    metalness: 0.7,
+    roughness: 0.95,
+  });
+  const mesh = new THREE.InstancedMesh(geometry, material, count);
+  const dummy = new THREE.Object3D();
+
+  for (let i = 0; i < count; i++) {
+    const angle = (i / angleSteps) * Math.PI * 2;
+    const radius = planetSize + utils.randomBetween(radiusMin, radiusMax);
+    dummy.position.set(
+      Math.cos(angle) * radius,
+      (Math.random() - 0.5) * 0.2,
+      Math.sin(angle) * radius,
+    );
+    dummy.rotation.set(
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+    );
+    dummy.scale.setScalar(utils.randomBetween(0.2, 1.8));
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  }
+
+  mesh.instanceMatrix.needsUpdate = true;
+  return mesh;
+}
+
+function disposeMesh(mesh) {
+  if (!mesh) return;
+  mesh.traverse((child) => {
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) {
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+      materials.forEach((material) => {
+        if (material.map) material.map.dispose();
+        material.dispose();
+      });
+    }
+  });
+}
 
 export const Planet = ({
   position,
@@ -14,189 +69,206 @@ export const Planet = ({
   color,
   orbit,
   hasRing,
+  planetData,
+  hasAtmosphere,
+  hasClouds,
+  cityLights,
+  moons = [],
+  hasSatellite,
+  type,
 }) => {
   const {
-    setPlanetObj,
-    planetObj,
     scene,
-    setPlanetObj2,
     renderer,
     camera,
     stopOrbits,
+    timeScale,
+    registerSelectable,
+    unregisterSelectable,
+    lowQuality,
+    isMobile,
   } = useContext(PlanetContext);
   const animationFrameId = useRef();
-
   const planetRef = useRef(null);
   const ringGroupRef = useRef(null);
-  const [planet, setPlanet] = useState(null);
+  const ringSpeedRef = useRef(utils.randomBetween(0.001, 0.005));
+  const textureRef = useRef(null);
+  const positionRef = useRef({ x: 0, y: 0, z: 0 });
+  const cityLightsRef = useRef(null);
+  const [meshReady, setMeshReady] = useState(false);
 
   useEffect(() => {
-    if (scene) {
-      if (!planetRef.current) {
-        const planetGeometry = new THREE.SphereGeometry(size, 64, 64);
-        const textureLoader = new THREE.TextureLoader();
+    setMeshReady(false);
+    if (!scene) return;
 
-        const nebTexture = textureLoader.load(`/hd/${texture}.jpg`);
-        const options = {
-          map: nebTexture,
-          color: color || 0xffffff,
-        };
-        if (name == "sun") {
-          options.emissive = 0xffffaa; // couleur lumineuse
-          options.emissiveMap = nebTexture; // couleur lumineuse
-          options.emissiveIntensity = utils.randomBetween(0.1, 50);
-        }
-        const planetMaterial = new THREE.MeshStandardMaterial(options);
-        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+    const planetGeometry = new THREE.SphereGeometry(size, 64, 64);
+    const textureLoader = new THREE.TextureLoader();
+    const planetTexture = textureLoader.load(`/hd/${texture}.jpg`);
+    textureRef.current = planetTexture;
 
-        if (hasRing) {
-          const innerDodecahedronGroup = new THREE.Group();
+    let baseOptions = {
+      map: planetTexture,
+      color: color || 0xffffff,
+    };
 
-          for (let i = 0; i < 900; i++) {
-            const dodecahedronGeometry = new THREE.DodecahedronGeometry(
-              utils.randomBetween(0.01, 0.09),
-              0,
-            );
+    if (name === "sun") {
+      baseOptions.emissive = 0xffffaa;
+      baseOptions.emissiveMap = planetTexture;
+      baseOptions.emissiveIntensity = utils.randomBetween(0.1, 50);
+    } else if (type) {
+      baseOptions = getMaterialOptionsForType(type, baseOptions);
+    }
 
-            const dodecahedronMaterial = new THREE.MeshStandardMaterial({
-              color: 0xffffff,
-              metalness: 0.8,
-              roughness: 1,
-            });
-            const dodecahedron = new THREE.Mesh(
-              dodecahedronGeometry,
-              dodecahedronMaterial,
-            );
+    const planetMaterial = new THREE.MeshStandardMaterial({
+      ...baseOptions,
+      transparent: false,
+      opacity: 1,
+      depthWrite: true,
+    });
+    const planet = new THREE.Mesh(planetGeometry, planetMaterial);
 
-            const angle = (i / 900) * Math.PI * 2;
-            let radius = size + 0.5 + Math.random() * 2;
+    if (name === "sun") {
+      enableBloomLayer(planet);
+    }
 
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            const y = (Math.random() - 0.5) * 0.2; // small random height
+    if (planetData) {
+      planet.userData.planetId = planetData.planetId;
+      planet.userData.planetData = planetData;
+      registerSelectable(planet, planetData);
+    }
 
-            dodecahedron.position.set(x, y, z);
-            innerDodecahedronGroup.add(dodecahedron);
+    if (cityLights && name !== "sun") {
+      const lightsGeometry = new THREE.SphereGeometry(size * 1.001, 32, 32);
+      const lightsMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          sunPosition: { value: new THREE.Vector3(orbitCenter.x, orbitCenter.y, orbitCenter.z) },
+        },
+        vertexShader: `
+          varying vec3 vNormal;
+          varying vec3 vWorldPos;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPos = worldPos.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
-          for (let i = 0; i < 200; i++) {
-            const dodecahedronGeometry = new THREE.DodecahedronGeometry(
-              utils.randomBetween(0.01, 0.09),
-              0,
-            );
-
-            const dodecahedronMaterial = new THREE.MeshStandardMaterial({
-              color: 0xffffff,
-              metalness: 0.8,
-              roughness: 1,
-            });
-            const dodecahedron = new THREE.Mesh(
-              dodecahedronGeometry,
-              dodecahedronMaterial,
-            );
-
-            const angle = (i / 200) * Math.PI * 2;
-            let radius = size + 0.5 + Math.random() * 3;
-
-            if (i % 2 == 0) {
-              radius = radius * 1;
-            }
-
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            const y = (Math.random() - 0.5) * 0.2; // small random height
-
-            dodecahedron.position.set(x, y, z);
-            innerDodecahedronGroup.add(dodecahedron);
+        `,
+        fragmentShader: `
+          uniform vec3 sunPosition;
+          varying vec3 vNormal;
+          varying vec3 vWorldPos;
+          void main() {
+            vec3 toSun = normalize(sunPosition - vWorldPos);
+            float nightSide = step(dot(vNormal, toSun), 0.0);
+            float city = fract(sin(dot(vWorldPos.xz, vec2(12.9898, 78.233))) * 43758.5453);
+            city = step(0.92, city) * nightSide;
+            gl_FragColor = vec4(1.0, 0.9, 0.5, city * 0.8);
           }
-          for (let i = 0; i < 200; i++) {
-            const dodecahedronGeometry = new THREE.DodecahedronGeometry(
-              utils.randomBetween(0.01, 0.09),
-              0,
-            );
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const lightsMesh = new THREE.Mesh(lightsGeometry, lightsMaterial);
+      cityLightsRef.current = lightsMesh;
+      planet.add(lightsMesh);
+    }
 
-            const dodecahedronMaterial = new THREE.MeshStandardMaterial({
-              color: 0xffffff,
-              metalness: 0.8,
-              roughness: 1,
-            });
-            const dodecahedron = new THREE.Mesh(
-              dodecahedronGeometry,
-              dodecahedronMaterial,
-            );
+    if (hasRing) {
+      const ringGroup = new THREE.Group();
+      const density = lowQuality || isMobile ? 0.55 : 1;
+      const bands = [
+        { count: Math.floor(600 * density), min: 0.5, max: 2, steps: 600 },
+        { count: Math.floor(150 * density), min: 0.5, max: 3, steps: 150 },
+        { count: Math.floor(150 * density), min: 0.5, max: 6, steps: 100 },
+      ];
 
-            const angle = (i / 100) * Math.PI * 2;
-            let radius = size + 0.5 + Math.random() * 6;
-
-            if (i % 2 == 0) {
-              radius = radius * 1.2;
-            }
-
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            const y = (Math.random() - 0.5) * 0.2; // small random height
-
-            dodecahedron.position.set(x, y, z);
-            innerDodecahedronGroup.add(dodecahedron);
-          }
-          innerDodecahedronGroup.rotation.y = 1.7; // Tilt the whole group
-          ringGroupRef.current = innerDodecahedronGroup;
-          planet.add(innerDodecahedronGroup);
+      for (const band of bands) {
+        if (band.count > 0) {
+          ringGroup.add(
+            createRockRingBand(
+              band.count,
+              size,
+              band.min,
+              band.max,
+              band.steps,
+            ),
+          );
         }
-        planetRef.current = planet;
-        if (position) {
-          planet.position.set(position.x, position.y, position.z);
-        }
-        if (name !== "planet") {
-          setPlanetObj2(planet);
-        } else {
-          setPlanetObj(planet);
-        }
-        setPlanet(planet);
-        scene.add(planet);
-      } else {
-        planetRef.current.geometry.dispose();
-        planetRef.current.geometry = new THREE.SphereGeometry(size, 64, 64);
       }
-    }
-  }, []);
-  function updateOrbit(mesh, orbit, delta, orbitCenter) {
-    if (orbit?.angle !== undefined) {
-      orbit.angle += orbit.speed * delta;
+
+      ringGroup.rotation.y = 1.7;
+      ringGroupRef.current = ringGroup;
+      planet.add(ringGroup);
     }
 
-    if (orbit?.radius) {
-      const x = orbit.radius * Math.cos(orbit.angle);
-      const z = orbit.radius * Math.sin(orbit.angle);
+    planetRef.current = planet;
 
-      mesh.position.set(orbitCenter.x + x, orbitCenter.y, orbitCenter.z + z);
-
-      mesh.rotation.y += rotation;
-      mesh.rotation.z = orbit.inclination;
+    if (position) {
+      planet.position.set(position.x, position.y, position.z);
+      positionRef.current = { ...position };
     }
-  }
+
+    scene.add(planet);
+    setMeshReady(true);
+
+    return () => {
+      setMeshReady(false);
+      if (planetData) unregisterSelectable(planet);
+      scene.remove(planet);
+      disposeMesh(planet);
+      if (textureRef.current) textureRef.current.dispose();
+      planetRef.current = null;
+      ringGroupRef.current = null;
+      cityLightsRef.current = null;
+    };
+    // planetData.planetId ensures added planets mount their Three.js mesh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene, size, texture, color, hasRing, name, type, cityLights, lowQuality, isMobile, planetData?.planetId]);
+
   const animate = useCallback(() => {
-    if (!renderer || !scene || !camera) {
-      return;
-    }
+    if (!renderer || !scene || !camera || !planetRef.current) return;
 
     if (ringGroupRef.current) {
-      ringGroupRef.current.rotation.y += utils.randomBetween(0.001, 0.005);
+      ringGroupRef.current.rotation.y += ringSpeedRef.current * timeScale;
     }
 
-    const time = Date.now();
-
-    // planetRef.current.rotation.y = time * rotation;
     if (!stopOrbits) {
-      planetRef.current.rotation.y += rotation;
-      updateOrbit(planetRef.current, orbit, 1, orbitCenter);
+      planetRef.current.rotation.y += rotation * timeScale;
+      if (orbit && orbitCenter) {
+        updateOrbit(
+          planetRef.current,
+          orbit,
+          timeScale,
+          orbitCenter,
+          0,
+        );
+      }
     }
-    // planet.rotation.x += 0.01; // bascule
-    // planet.rotation.y += 0.01; // spin
-    // planet.rotation.z += 0.01; // roulis
 
-    // renderer.render(scene, camera);
+    const p = planetRef.current.position;
+    positionRef.current = { x: p.x, y: p.y, z: p.z };
+
+    if (cityLightsRef.current) {
+      cityLightsRef.current.material.uniforms.sunPosition.value.set(
+        orbitCenter.x,
+        orbitCenter.y,
+        orbitCenter.z,
+      );
+    }
+
     animationFrameId.current = requestAnimationFrame(animate);
-  }, [renderer, scene, camera, planetObj, stopOrbits]);
+  }, [
+    renderer,
+    scene,
+    camera,
+    rotation,
+    orbit,
+    orbitCenter,
+    stopOrbits,
+    timeScale,
+  ]);
+
   useEffect(() => {
     animationFrameId.current = requestAnimationFrame(animate);
     return () => {
@@ -206,5 +278,32 @@ export const Planet = ({
     };
   }, [animate]);
 
-  return null;
+  return (
+    <>
+      {meshReady && name === "sun" && (
+        <SunHalo size={size} parentRef={planetRef} />
+      )}
+      {meshReady && hasAtmosphere && name !== "sun" && (
+        <PlanetAtmosphere size={size} type={type} parentRef={planetRef} />
+      )}
+      {meshReady && hasClouds && name !== "sun" && (
+        <PlanetClouds
+          size={size}
+          parentRef={planetRef}
+          timeScale={timeScale}
+          stopOrbits={stopOrbits}
+        />
+      )}
+      {moons.map((moon, i) => (
+        <Moon
+          key={`moon-${planetData?.planetId ?? name}-${i}`}
+          moon={moon}
+          planetPositionRef={positionRef}
+        />
+      ))}
+      {hasSatellite && (
+        <Satellite planetPositionRef={positionRef} planetSize={size} />
+      )}
+    </>
+  );
 };

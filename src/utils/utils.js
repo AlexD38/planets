@@ -1,34 +1,31 @@
-import { split } from "three/tsl";
 import { configPlanetInfos } from "../config/config";
+import * as rng from "./seededRandom";
 
 export const utils = {
   generatePlanetInfos() {
     const newPlanet = {};
-    const NeedAdditionalName = Date.now().toLocaleString().at(-1) % 2;
+
     for (const key in configPlanetInfos) {
+      if (key === "temperatureRanges" || key === "type") continue;
+
       let newInfos = this.getRandomElement(configPlanetInfos[key]);
 
-      if (key === "temperatureRanges") {
-        const range = this.getRandomElement(
-          configPlanetInfos.temperatureRanges
-        );
-
-        newPlanet.type = Object.keys(range)[0];
-        const rangeValues = Object.values(range);
-        const [min, max] = rangeValues[0];
-        newPlanet.temperature = this.randomBetween(min, max);
-      }
-
       if (key === "name") {
-        newInfos = `${newInfos} ${this.getRandomElement(
-          configPlanetInfos.letters
-        )}-${Math.random(0, 1000).toFixed(
-          this.getRandomElement(configPlanetInfos.numbers)
-        )}`.replace(".", "");
+        const useAdditionalName = Math.floor(rng.random() * 2) === 0;
+        const suffix = `${this.getRandomElement(configPlanetInfos.letters)}-${Math.floor(rng.random() * 1000)}`;
+        newInfos = useAdditionalName
+          ? `${newInfos} ${this.getRandomElement(configPlanetInfos.additionalName)}`
+          : `${newInfos} ${suffix}`;
       }
 
       newPlanet[key] = newInfos;
     }
+
+    const range = this.getRandomElement(configPlanetInfos.temperatureRanges);
+    newPlanet.type = Object.keys(range)[0];
+    const [min, max] = Object.values(range)[0];
+    newPlanet.temperature = this.randomBetween(min, max);
+
     return newPlanet;
   },
   getRandomElement(array) {
@@ -36,20 +33,20 @@ export const utils = {
       throw new Error("Le paramètre doit être un tableau non vide");
     }
 
-    const randomIndex = Math.floor(Math.random() * array.length);
+    const randomIndex = Math.floor(rng.random() * array.length);
     return array[randomIndex];
   },
   getRandomHexColor() {
-    return Math.floor(Math.random() * 0x1000000);
+    return Math.floor(rng.random() * 0x1000000);
   },
   getRandomLightPosition() {
-    const x = (Math.random() - 0.5) * 100; // entre -50 et 50
-    const y = Math.random() * 50 + 10; // entre 10 et 60 pour être au-dessus
-    const z = (Math.random() - 0.5) * 100; // entre -50 et 50
+    const x = (rng.random() - 0.5) * 100;
+    const y = rng.random() * 50 + 10;
+    const z = (rng.random() - 0.5) * 100;
     return { x, y, z };
   },
   randomBetween(min, max) {
-    return +(Math.random() * (max - min) + min).toFixed(3);
+    return +(rng.random() * (max - min) + min).toFixed(3);
   },
   distance3D(a, b) {
     const dx = a.x - b.x;
@@ -65,21 +62,20 @@ export const utils = {
     }
 
     const analyze = {
-      name: universe[0].name,
+      name: universe[0]?.name ?? "Unknown System",
       numberOfPlanets: universe.length,
-      planetTypes: [...new Set(universe.map((x) => x.type))],
-      lifeDetected: inhabitedPlanetCount > 0 ? true : false,
+      planetTypes: [...new Set(universe.map((x) => x.type).filter(Boolean))],
+      lifeDetected: inhabitedPlanetCount > 0,
       infos: `At least ${inhabitedPlanetCount} planet${
         inhabitedPlanetCount > 1 ? "s" : ""
       } of this system is inhabited by intelligent life form`,
     };
 
-    const randomCommentsNeeded = utils.randomBetween(1, 3);
+    const randomCommentsNeeded = Math.floor(utils.randomBetween(1, 3));
     const randomComments = new Set();
 
     for (let index = 0; index < randomCommentsNeeded; index++) {
-      const randomComment = utils.getRandomElement(configPlanetInfos.comments);
-      randomComments.add(randomComment);
+      randomComments.add(utils.getRandomElement(configPlanetInfos.comments));
     }
 
     analyze.comments = Array.from(randomComments);

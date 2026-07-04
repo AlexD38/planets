@@ -1,28 +1,211 @@
-.parameters,
-.stop-orbit,
-.fly-mode {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  font-size: 1.5rem;
-  color: chartreuse;
-  transition: all 0.3s ease-in-out;
-  cursor: pointer;
+/* ── Bottom command dock ── */
+
+.bottom-bar {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  max-width: calc(100vw - 1.5rem);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: var(--shadow-hud);
+  flex-wrap: wrap;
 }
 
-.fly-mode {
-  top: 6rem;
+.bottom-bar-section {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
 }
-.inactive {
-  color: darkgray;
+
+.bottom-bar-divider {
+  width: 1px;
+  height: 1.75rem;
+  margin: 0 0.15rem;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--border-strong),
+    transparent
+  );
+  flex-shrink: 0;
 }
-.parameters:hover {
-  transform: rotate(360deg);
-  transition: all 0.3s ease-in-out;
+
+.bottom-bar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 2.75rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
-.stop-orbit {
-  top: 3.5rem;
+
+.bottom-bar-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(56, 189, 248, 0.08);
 }
+
+.bottom-bar-btn.active {
+  color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.14);
+  box-shadow: inset 0 0 0 1px var(--border-strong), var(--glow-cyan);
+}
+
+.bottom-bar-btn.inactive {
+  color: var(--text-muted);
+}
+
+.bottom-bar-btn-sm {
+  min-width: 2rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--accent-teal);
+}
+
+.bottom-bar-btn-text {
+  flex-direction: row;
+  gap: 0.4rem;
+  min-width: auto;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bottom-bar-btn-text:hover:not(:disabled) {
+  border-color: var(--border);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.bottom-bar-label {
+  font-family: var(--font-ui);
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.bottom-bar-time {
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+}
+
+.bottom-bar-time-value {
+  min-width: 2.75rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--accent-teal);
+}
+
+/* ── Planet labels ── */
+
+.planet-labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  padding-bottom: 5.5rem;
+  z-index: 20;
+}
+
+.planet-label {
+  position: absolute;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: rgba(8, 14, 26, 0.65);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(6px);
+  transform: translate(-50%, -130%);
+  white-space: nowrap;
+}
+
+/* ── System minimap ── */
+
+.system-minimap {
+  position: fixed;
+  bottom: 5.75rem;
+  right: 1.25rem;
+  z-index: 50;
+  padding: 0.65rem 0.75rem 0.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-hud);
+}
+
+.system-minimap-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+.system-minimap-header i {
+  font-size: 0.55rem;
+  opacity: 0.85;
+}
+
+.system-minimap svg {
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Fly mode pointer (shared) ── */
+
+.pointer-container {
+  position: fixed;
+  width: 100px;
+  height: 100px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  color: var(--accent-cyan);
+  pointer-events: none;
+}
+
+.pointer-crosshair {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5));
+}
+
 .key-display {
   position: absolute;
   inset: 0;
@@ -33,47 +216,74 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  color: chartreuse;
-  font-size: 24px;
-  filter: drop-shadow(0 0 4px chartreuse);
+  color: var(--accent-teal);
+  font-size: 1.1rem;
   transform: translate(-50%, -50%);
-  animation: pulse 0.6s infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.6));
+  animation: hud-pulse 0.7s ease-in-out infinite alternate;
 }
 
-/* Offsets autour du viseur */
-
 .key-item.top {
-  transform: translate(-50%, -140%);
+  transform: translate(-50%, -280%);
 }
 
 .key-item.bottom {
-  transform: translate(-50%, 40%);
+  transform: translate(-50%, 180%);
 }
 
 .key-item.left {
-  transform: translate(-180%, -50%);
+  transform: translate(-300%, -50%);
 }
 
 .key-item.right {
-  transform: translate(80%, -50%);
+  transform: translate(200%, -50%);
 }
 
-@keyframes pulse {
+@keyframes hud-pulse {
   from {
-    opacity: 0.4;
+    opacity: 0.45;
   }
   to {
     opacity: 1;
   }
 }
 
-.pointer-container {
-  position: absolute;
-  width: 120px;
-  height: 120px;
+.inactive {
+  color: var(--text-muted);
+}
 
-  top: 50%;
-  left: 50%;
+@media (max-width: 768px) {
+  .bottom-bar {
+    bottom: 0.75rem;
+    padding: 0.4rem 0.5rem;
+    gap: 0.15rem;
+    border-radius: var(--radius-md);
+  }
 
-  transform: translate(-50%, -50%);
+  .bottom-bar-label {
+    display: none;
+  }
+
+  .bottom-bar-btn {
+    min-width: 2.35rem;
+    padding: 0.38rem;
+  }
+
+  .bottom-bar-divider {
+    height: 1.35rem;
+  }
+
+  .system-minimap {
+    bottom: 5rem;
+    right: 0.75rem;
+    transform: scale(0.92);
+    transform-origin: bottom right;
+  }
+
+  .planet-infos-container {
+    top: 0.75rem;
+    left: 0.75rem;
+    max-width: calc(100vw - 1.5rem);
+    font-size: 0.75rem;
+  }
 }

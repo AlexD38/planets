@@ -1,16 +1,139 @@
-.planet-infos-container {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  border: 1px solid chartreuse;
-  padding: 1rem;
-  font-family: monospace;
-  opacity: 0.8;
-  color: chartreuse;
-  text-align: right;
+/* ── HUD panels (infos, cards) ── */
+
+.hud-panel {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hud);
 }
-.planet-infos-infos,
-.planet-infos-note,
-.planet-infos-comments {
+
+.hud-panel::before,
+.hud-panel::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.hud-panel::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid var(--accent-cyan);
+  border-left: 2px solid var(--accent-cyan);
+  border-radius: var(--radius-md) 0 0 0;
+}
+
+.hud-panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid var(--accent-violet);
+  border-right: 2px solid var(--accent-violet);
+  border-radius: 0 0 var(--radius-md) 0;
+}
+
+.hud-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+.hud-panel-header i {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.planet-infos-container {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  max-width: min(400px, calc(100vw - 2.5rem));
+  padding: 1rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-primary);
   text-align: left;
+  z-index: 50;
+}
+
+.planet-infos-container .Typewriter__wrapper,
+.planet-infos-container .Typewriter__cursor {
+  color: var(--accent-teal);
+}
+
+.planet-infos-infos {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin-bottom: 0.35rem;
+}
+
+.planet-infos-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.planet-infos-type,
+.planet-infos-gravity,
+.planet-infos-inhabited {
+  color: var(--text-secondary);
+}
+
+.planet-infos-cabronDetected,
+.planet-infos-comments {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.planet-infos-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.planet-infos-btn {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent-cyan);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.planet-infos-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.planet-infos-btn-muted {
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.planet-infos-btn-muted:hover {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  color: var(--text-primary);
 }

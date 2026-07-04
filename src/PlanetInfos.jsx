@@ -1,60 +1,68 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { PlanetContext } from "./context/PlanetContext";
 import "./styles.css";
 import Typewriter from "typewriter-effect/dist/core";
 
 export const PlanetInfos = () => {
-  const { systemInfos, planetInfos, isMobile, planetInfosDisplay } =
-    useContext(PlanetContext);
+  const {
+    systemInfos,
+    planetInfos,
+    selectedPlanet,
+    planetInfosDisplay,
+  } = useContext(PlanetContext);
   const typewriterRef = useRef(null);
   const typewriterInstanceRef = useRef(null);
-  const [canDisplayInfos, setCanDisplayInfos] = useState(false);
+  const [scanDone, setScanDone] = useState(false);
   const [displayInfos, setDisplayInfos] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
-  const handleUserChoice = (e) => {
-    if (e.key == "y") {
-      typewriterInstanceRef.current
-        .typeString("<br>")
-        .typeString("Loading data")
-        .pauseFor(200)
-        .typeString(".")
-        .pauseFor(200)
-        .typeString(".")
-        .pauseFor(200)
-        .typeString(".")
-        .pauseFor(1000)
-        .start();
+  const activePlanet = selectedPlanet ?? planetInfos;
+  const activePlanetKey =
+    selectedPlanet?.planetId ?? planetInfos?.name ?? "system";
 
-      setTimeout(() => {
-        setDisplayInfos(true);
-      }, 2000);
+  const handleShowDetails = useCallback(() => {
+    if (!typewriterInstanceRef.current) {
+      setDisplayInfos(true);
+      return;
     }
-    if (e.key == "n") {
-      typewriterInstanceRef.current
-        .deleteAll(1)
-        .typeString("System name : ")
-        .pauseFor(500)
-        .typeString(`${planetInfos.name}.`)
-        .start();
-    }
-    return;
-  };
+
+    setLoadingDetails(true);
+    typewriterInstanceRef.current
+      .typeString("<br>")
+      .typeString("Loading data")
+      .pauseFor(200)
+      .typeString(".")
+      .pauseFor(200)
+      .typeString(".")
+      .pauseFor(200)
+      .typeString(".")
+      .pauseFor(800)
+      .start();
+
+    setTimeout(() => {
+      setDisplayInfos(true);
+      setLoadingDetails(false);
+    }, 1800);
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+  }, []);
+
+  const handleCollapse = useCallback(() => {
+    setDisplayInfos(false);
+    setDismissed(false);
+    setScanDone(true);
+  }, []);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!canDisplayInfos) return;
-      handleUserChoice(e);
-    };
+    if (!activePlanet || !typewriterRef.current) return;
 
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [canDisplayInfos]);
-
-  useEffect(() => {
-    if (!planetInfos || !typewriterRef.current) return;
+    setDisplayInfos(false);
+    setScanDone(false);
+    setLoadingDetails(false);
+    setDismissed(false);
 
     const typewriter = new Typewriter(typewriterRef.current, {
       autoStart: true,
@@ -65,7 +73,7 @@ export const PlanetInfos = () => {
     typewriterInstanceRef.current = typewriter;
 
     typewriter
-      .typeString("Scanning System")
+      .typeString(selectedPlanet ? "Planet scan" : "Scanning System")
       .pauseFor(200)
       .typeString(".")
       .pauseFor(200)
@@ -76,76 +84,119 @@ export const PlanetInfos = () => {
       .typeString("Data acquired.")
       .pauseFor(500)
       .typeString("<br>")
-      .typeString("System name : ")
+      .typeString(selectedPlanet ? "Planet : " : "System name : ")
       .pauseFor(500)
-      .typeString(`${planetInfos.name}.`)
-      .pauseFor(1000)
+      .typeString(`${activePlanet.name}.`)
+      .pauseFor(400)
+      .callFunction(() => setScanDone(true))
       .start();
 
-    setCanDisplayInfos(true);
-
-    if (!isMobile) {
-      typewriter
-        .typeString("<br>")
-        .typeString("<br>")
-        .typeString("Display system infos ? [y, n]");
-    } else {
-      setTimeout(() => {
-        handleUserChoice({ key: "y" });
-      }, 6000);
-    }
-
     return () => typewriter.stop();
-  }, [planetInfos]);
+  }, [activePlanetKey, selectedPlanet, activePlanet]);
 
-  if (!planetInfos) return null;
-
-  if (!planetInfosDisplay) {
-    return null;
-  }
+  if (!activePlanet || !planetInfosDisplay) return null;
 
   return (
     <>
       {!displayInfos && (
-        <div className="planet-infos-container" ref={typewriterRef}></div>
-      )}
-      {displayInfos && planetInfosDisplay && (
-        <>
-          <div className="planet-infos-container">
-            <input
-              type="hidden"
-              name=""
-              onKeyDown={(e) => handleUserChoice(e)}
-              autoFocus={true}
-            />
-            <div className="planet-infos-infos">Infos :</div>
-            <div className="planet-infos-name">Name : "{systemInfos.name}"</div>
-            <div className="planet-infos-name">
-              {systemInfos.numberOfPlanets} planets detected
-            </div>
-
-            <div className="planet-infos-type">
-              Types : {systemInfos.planetTypes.join(", ")}
-            </div>
-            <div className="planet-infos-cabronDetected">
-              {planetInfos.cabronDetected
-                ? "Carbon detected"
-                : "No Carbon detected"}
-            </div>
-            <br></br>
-            <div className="planet-infos-gravity">
-              Life detected : {systemInfos.lifeDetected ? "yes" : "none"}
-            </div>
-            {"_".repeat(40)}
-            <br></br>
-            <br></br>
-            <div className="planet-infos-comments">Comments : </div>
-            <div className="planet-infos-inhabited">{systemInfos.infos}</div>
-            {systemInfos.comments.map((x) => (
-              <div className="planet-infos-cabronDetected">{x}</div>
-            ))}
+        <div className="planet-infos-container hud-panel">
+          <div className="hud-panel-header">
+            <i className="fa-solid fa-satellite-dish" />
+            {selectedPlanet ? "Scan planétaire" : "Scan système"}
           </div>
-        </>
+          <div ref={typewriterRef} />
+          {scanDone && !dismissed && !loadingDetails && (
+            <div className="planet-infos-actions">
+              <button
+                type="button"
+                className="planet-infos-btn"
+                onClick={handleShowDetails}
+              >
+                Afficher détails
+              </button>
+              <button
+                type="button"
+                className="planet-infos-btn planet-infos-btn-muted"
+                onClick={handleDismiss}
+              >
+                Ignorer
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {displayInfos && (
+        <div className="planet-infos-container hud-panel">
+          <div className="hud-panel-header">
+            <i className="fa-solid fa-database" />
+            {selectedPlanet ? "Fiche planète" : "Fiche système"}
+          </div>
+          {selectedPlanet ? (
+            <>
+              <div className="planet-infos-infos">Planet scan :</div>
+              <div className="planet-infos-name">Name : &quot;{selectedPlanet.name}&quot;</div>
+              <div className="planet-infos-type">Type : {selectedPlanet.type}</div>
+              <div className="planet-infos-gravity">
+                Gravity : {selectedPlanet.gravity}
+              </div>
+              <div className="planet-infos-cabronDetected">
+                Temperature : {selectedPlanet.temperature}°C
+              </div>
+              <div className="planet-infos-inhabited">
+                Inhabited : {selectedPlanet.inhabited ? "yes" : "no"}
+              </div>
+              <div className="planet-infos-comments">
+                Intelligence :{" "}
+                {selectedPlanet.intelligenceFormsDetected ? "detected" : "none"}
+              </div>
+            </>
+          ) : (
+            systemInfos && (
+              <>
+                <div className="planet-infos-infos">Infos :</div>
+                <div className="planet-infos-name">
+                  Name : &quot;{systemInfos.name}&quot;
+                </div>
+                <div className="planet-infos-name">
+                  {systemInfos.numberOfPlanets} planets detected
+                </div>
+                <div className="planet-infos-type">
+                  Types : {systemInfos.planetTypes.join(", ")}
+                </div>
+                <div className="planet-infos-cabronDetected">
+                  {activePlanet.cabronDetected
+                    ? "Carbon detected"
+                    : "No Carbon detected"}
+                </div>
+                <br />
+                <div className="planet-infos-gravity">
+                  Life detected : {systemInfos.lifeDetected ? "yes" : "none"}
+                </div>
+                {"_".repeat(40)}
+                <br />
+                <br />
+                <div className="planet-infos-comments">Comments : </div>
+                {systemInfos.infos && (
+                  <div className="planet-infos-inhabited">{systemInfos.infos}</div>
+                )}
+                {systemInfos.comments?.map((comment, index) => (
+                  <div key={index} className="planet-infos-cabronDetected">
+                    {comment}
+                  </div>
+                ))}
+              </>
+            )
+          )}
+          <div className="planet-infos-actions">
+            <button
+              type="button"
+              className="planet-infos-btn planet-infos-btn-muted"
+              onClick={handleCollapse}
+            >
+              Réduire
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
