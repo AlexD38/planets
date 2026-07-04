@@ -97,7 +97,6 @@ export const PlanetProvider = ({ children }) => {
     rollRight: 0,
     isFlyMode: false,
   });
-
   const registerSelectable = useCallback((mesh, planetData) => {
     selectableMeshesRef.current.set(mesh.uuid, { mesh, planetData });
   }, []);

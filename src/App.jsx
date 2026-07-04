@@ -301,7 +301,6 @@ export default function App() {
       const damping = 2.0;
       const maxSpeed = 500.0;
       const angularDamping = 0.95;
-
       const pitchInput = moveState.pitchUp - moveState.pitchDown;
       const rollInput = moveState.rollLeft - moveState.rollRight;
 
