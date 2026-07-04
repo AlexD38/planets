@@ -1,0 +1,75 @@
+/* ── HUD layout zones (no overlap) ── */
+
+.hud-shell {
+  --hud-inset: 0.85rem;
+  --hud-bar-offset: 4.75rem;
+  --hud-col-width: min(340px, calc(50vw - var(--hud-inset) - 0.5rem));
+
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.hud-zone {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.hud-zone > * {
+  pointer-events: auto;
+}
+
+.hud-zone-tl {
+  top: var(--hud-inset);
+  left: var(--hud-inset);
+  width: var(--hud-col-width);
+  max-height: calc(46vh - var(--hud-inset));
+}
+
+.hud-zone-tr {
+  top: var(--hud-inset);
+  right: var(--hud-inset);
+  width: auto;
+  max-width: calc(50vw - var(--hud-inset));
+  align-items: flex-end;
+}
+
+.hud-zone-bl {
+  bottom: var(--hud-bar-offset);
+  left: var(--hud-inset);
+  width: var(--hud-col-width);
+  max-height: calc(28vh - var(--hud-inset));
+}
+
+@media (max-width: 768px) {
+  .hud-shell {
+    --hud-inset: 0.6rem;
+    --hud-bar-offset: 4.25rem;
+    --hud-col-width: min(280px, calc(100vw - 1.2rem));
+  }
+
+  .hud-zone-tl {
+    max-height: calc(38vh - var(--hud-inset));
+  }
+
+  .hud-zone-bl {
+    max-height: calc(22vh - var(--hud-inset));
+  }
+
+  .hud-zone-tr {
+    max-width: calc(100vw - 1.2rem);
+  }
+}
+
+@media (max-height: 640px) {
+  .hud-zone-tl {
+    max-height: calc(34vh - var(--hud-inset));
+  }
+
+  .hud-zone-bl {
+    max-height: 5.5rem;
+  }
+}

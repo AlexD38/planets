@@ -9,6 +9,8 @@ import { PlanetContext } from "./context/PlanetContext";
 import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { BottomBar } from "./components/BottomBar";
+import { CaptainLog } from "./components/CaptainLog";
+import { RareEvents } from "./components/RareEvents";
 import { BlackHole } from "./components/BlackHole";
 import { PlanetLabels } from "./components/PlanetLabels";
 import { SystemMinimap } from "./components/SystemMinimap";
@@ -21,9 +23,14 @@ import { utils } from "./utils/utils";
 import {
   startSpaceAudio,
   stopSpaceAudio,
-  updateSpaceAudioFromDistance,
+  updateSpaceAudioAmbience,
 } from "./utils/spaceAudio";
+import {
+  createCinematicPost,
+  updateCinematicUniforms,
+} from "./utils/cinematicPost";
 import "./App.css";
+import "./hud-layout.css";
 import { System } from "./components/WholeSystem";
 import { getOrbitPosition } from "./utils/orbit";
 
@@ -42,12 +49,35 @@ function disposeObject3D(object) {
   });
 }
 
+function getNearestBodyDistance(camera, system) {
+  if (!camera || !system) return 500;
+  const orbitCenter = { x: system.x, y: system.y, z: system.z };
+  let min = Infinity;
+
+  for (const planet of system.planets ?? []) {
+    if (!planet.orbit) continue;
+    const pos = getOrbitPosition(planet.orbit, planet.orbit.angle, orbitCenter);
+    min = Math.min(min, camera.position.distanceTo(pos));
+  }
+
+  for (const asteroid of system.asteroidBelt?.majorAsteroids ?? []) {
+    if (!asteroid.orbit) continue;
+    const pos = getOrbitPosition(asteroid.orbit, asteroid.orbit.angle, orbitCenter);
+    pos.y += asteroid.yOffset ?? 0;
+    min = Math.min(min, camera.position.distanceTo(pos));
+  }
+
+  return Number.isFinite(min) ? min : 500;
+}
+
 export default function App() {
   const mountRef = useRef(null);
   const animationFrameId = useRef();
   const bloomComposerRef = useRef(null);
   const bloomOverlayRef = useRef(null);
   const bloomPassRef = useRef(null);
+  const captureRTRef = useRef(null);
+  const cinematicPostRef = useRef(null);
   const sceneInitRef = useRef(false);
   const mouseRef = useRef(new THREE.Vector2());
   const controlsRef = useRef(null);
@@ -123,6 +153,7 @@ export default function App() {
     lowQuality,
     flyToTarget,
     setFlyToTarget,
+    activeEvent,
   } = useContext(PlanetContext);
 
   usePlanetPicker(mountRef);
@@ -197,6 +228,14 @@ export default function App() {
     overlayScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), overlayMaterial));
     bloomOverlayRef.current = { scene: overlayScene, camera: overlayCamera, material: overlayMaterial };
 
+    const captureRT = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+      { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter },
+    );
+    captureRTRef.current = captureRT;
+    cinematicPostRef.current = createCinematicPost();
+
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
@@ -222,6 +261,7 @@ export default function App() {
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       bloomComposer.setSize(window.innerWidth, window.innerHeight);
+      captureRTRef.current?.setSize(window.innerWidth, window.innerHeight);
     };
 
     window.addEventListener("mousemove", onMouseMove);
@@ -235,6 +275,10 @@ export default function App() {
       bloomComposer.dispose();
       bloomOverlayRef.current?.material.dispose();
       bloomOverlayRef.current?.scene.children[0]?.geometry?.dispose();
+      captureRTRef.current?.dispose();
+      cinematicPostRef.current?.dispose();
+      captureRTRef.current = null;
+      cinematicPostRef.current = null;
       renderer.dispose();
       disposeObject3D(scene);
       bloomComposerRef.current = null;
@@ -289,10 +333,25 @@ export default function App() {
       moons6.rotation.z = moon6RotationTilt.current;
     }
 
-    if (audioEnabled && camera) {
-      const dist = camera.position.length();
-      updateSpaceAudioFromDistance(dist);
+    if (audioEnabled && camera && systems[0]) {
+      const system = systems[0];
+      const sunPos = new THREE.Vector3(system.x, system.y, system.z);
+      const distToSun = camera.position.distanceTo(sunPos);
+      const distToNearestBody = getNearestBodyDistance(camera, system);
+      updateSpaceAudioAmbience({
+        distToSun,
+        distToNearestBody,
+        flySpeed: moveState.isFlyMode ? velocity.current.length() : 0,
+        stellarType: system.stellarType,
+      });
     }
+
+    const system = systems?.[0];
+    const sunPos = system
+      ? new THREE.Vector3(system.x, system.y, system.z)
+      : new THREE.Vector3(0, 0, 0);
+    const distToSun = camera.position.distanceTo(sunPos);
+    const isEclipse = activeEvent?.type === "eclipse";
 
     if (moveState.isFlyMode) {
       const delta = clock.current.getDelta();
@@ -372,26 +431,65 @@ export default function App() {
     camera.layers.enable(0);
     camera.layers.enable(BLOOM_LAYER);
 
-    renderer.setRenderTarget(null);
-    renderer.render(scene, camera);
+    const captureRT = captureRTRef.current;
+    const cinematicPost = cinematicPostRef.current;
 
-    if (bloomEnabled && bloomComposerRef.current && bloomOverlayRef.current) {
-      const savedLayers = camera.layers.mask;
-      camera.layers.set(BLOOM_LAYER);
-      bloomComposerRef.current.render();
-      camera.layers.mask = savedLayers;
-      camera.layers.enable(0);
-      camera.layers.enable(BLOOM_LAYER);
+    if (captureRT && cinematicPost) {
+      renderer.setRenderTarget(captureRT);
+      renderer.clear();
+      renderer.render(scene, camera);
 
-      const { scene: overlayScene, camera: overlayCamera, material } =
-        bloomOverlayRef.current;
-      material.uniforms.bloomTexture.value =
-        bloomComposerRef.current.readBuffer.texture;
+      if (bloomEnabled && bloomComposerRef.current && bloomOverlayRef.current) {
+        const savedLayers = camera.layers.mask;
+        camera.layers.set(BLOOM_LAYER);
+        bloomComposerRef.current.render();
+        camera.layers.mask = savedLayers;
+        camera.layers.enable(0);
+        camera.layers.enable(BLOOM_LAYER);
 
-      const prevAutoClear = renderer.autoClear;
-      renderer.autoClear = false;
-      renderer.render(overlayScene, overlayCamera);
-      renderer.autoClear = prevAutoClear;
+        const { scene: overlayScene, camera: overlayCamera, material } =
+          bloomOverlayRef.current;
+        material.uniforms.bloomTexture.value =
+          bloomComposerRef.current.readBuffer.texture;
+
+        const prevAutoClear = renderer.autoClear;
+        renderer.autoClear = false;
+        renderer.render(overlayScene, overlayCamera);
+        renderer.autoClear = prevAutoClear;
+      }
+
+      renderer.setRenderTarget(null);
+      cinematicPost.uniforms.tDiffuse.value = captureRT.texture;
+      updateCinematicUniforms(cinematicPost.uniforms, {
+        vignetteStrength: isEclipse ? 0.6 : 0.25,
+        grainStrength: lowQuality ? 0 : 0.04,
+        chromaticAberration: Math.min(0.012, 50 / Math.max(distToSun, 30)),
+        exposure: isEclipse ? 0.65 : 1.0,
+        time: clock.current.getElapsedTime(),
+      });
+      renderer.render(cinematicPost.scene, cinematicPost.camera);
+    } else {
+      renderer.setRenderTarget(null);
+      renderer.render(scene, camera);
+
+      if (bloomEnabled && bloomComposerRef.current && bloomOverlayRef.current) {
+        const savedLayers = camera.layers.mask;
+        camera.layers.set(BLOOM_LAYER);
+        bloomComposerRef.current.render();
+        camera.layers.mask = savedLayers;
+        camera.layers.enable(0);
+        camera.layers.enable(BLOOM_LAYER);
+
+        const { scene: overlayScene, camera: overlayCamera, material } =
+          bloomOverlayRef.current;
+        material.uniforms.bloomTexture.value =
+          bloomComposerRef.current.readBuffer.texture;
+
+        const prevAutoClear = renderer.autoClear;
+        renderer.autoClear = false;
+        renderer.render(overlayScene, overlayCamera);
+        renderer.autoClear = prevAutoClear;
+      }
     }
     animationFrameId.current = requestAnimationFrame(animate);
   }, [
@@ -410,6 +508,9 @@ export default function App() {
     bloomEnabled,
     flyToTarget,
     setFlyToTarget,
+    systems,
+    activeEvent,
+    lowQuality,
   ]);
 
   useEffect(() => {
@@ -426,11 +527,23 @@ export default function App() {
       <canvas ref={mountRef} className="three-canvas" />
       <div className="viewport-overlay" aria-hidden />
       <div className="viewport-scanlines" aria-hidden />
+
+      <div className="hud-shell">
+        <div className="hud-zone hud-zone-tl">
+          <PlanetInfos />
+        </div>
+        <div className="hud-zone hud-zone-tr">
+          <SystemMinimap />
+        </div>
+        <div className="hud-zone hud-zone-bl">
+          <CaptainLog />
+        </div>
+      </div>
+
       <BottomBar />
       <Pointer />
-      <PlanetInfos />
       <PlanetLabels />
-      <SystemMinimap />
+      <RareEvents />
 
       {scene && (
         <>

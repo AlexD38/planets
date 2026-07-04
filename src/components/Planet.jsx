@@ -6,6 +6,7 @@ import { updateOrbit } from "../utils/orbit";
 import { getMaterialOptionsForType } from "../utils/planetVisuals";
 import { enableBloomLayer } from "../utils/bloomLayer";
 import { PlanetAtmosphere } from "./PlanetAtmosphere";
+import { PlanetAurora } from "./PlanetAurora";
 import { PlanetClouds } from "./PlanetClouds";
 import { Moon } from "./Moon";
 import { Satellite } from "./Satellite";
@@ -290,7 +291,17 @@ export const Planet = ({
         <SunHalo size={size} parentRef={planetRef} />
       )}
       {meshReady && hasAtmosphere && name !== "sun" && (
-        <PlanetAtmosphere size={size} type={type} parentRef={planetRef} />
+        <>
+          <PlanetAtmosphere size={size} type={type} parentRef={planetRef} />
+          {planetData?.planetId && (
+            <PlanetAurora
+              size={size}
+              parentRef={planetRef}
+              planetId={planetData.planetId}
+              orbitCenter={orbitCenter}
+            />
+          )}
+        </>
       )}
       {meshReady && hasClouds && name !== "sun" && (
         <PlanetClouds

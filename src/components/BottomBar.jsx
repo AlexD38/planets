@@ -9,11 +9,12 @@ function BarButton({
   inactive,
   onClick,
   ariaLabel,
+  compact,
 }) {
   return (
     <button
       type="button"
-      className={`bottom-bar-btn ${active ? "active" : ""} ${inactive ? "inactive" : ""}`}
+      className={`bottom-bar-btn ${compact ? "bottom-bar-btn-icon" : ""} ${active ? "active" : ""} ${inactive ? "inactive" : ""}`}
       onClick={onClick}
       aria-label={ariaLabel}
       title={label}
@@ -32,6 +33,8 @@ export const BottomBar = () => {
     setShowLabels,
     showMinimap,
     setShowMinimap,
+    showCaptainLog,
+    setShowCaptainLog,
     audioEnabled,
     setAudioEnabled,
     moveState,
@@ -69,111 +72,127 @@ export const BottomBar = () => {
 
   return (
     <nav className="bottom-bar" aria-label="Controls">
-      <div className="bottom-bar-section">
+      <div className="bottom-bar-group" aria-label="Affichage">
         <BarButton
           icon={`fa-solid ${planetInfosDisplay ? "fa-eye" : "fa-eye-slash"}`}
-          label="Infos"
+          label="Infos scan"
           active={planetInfosDisplay}
           onClick={() => setPlanetInfosDisplay(!planetInfosDisplay)}
-          ariaLabel="Toggle infos panel"
+          ariaLabel="Afficher le panneau scan"
+          compact
         />
         <BarButton
           icon="fa-solid fa-tag"
-          label="Labels"
+          label="Noms"
           active={showLabels}
           onClick={() => setShowLabels(!showLabels)}
-          ariaLabel="Toggle planet labels"
+          ariaLabel="Afficher les labels"
+          compact
         />
         <BarButton
           icon="fa-solid fa-map"
           label="Carte"
           active={showMinimap}
           onClick={() => setShowMinimap(!showMinimap)}
-          ariaLabel="Toggle minimap"
+          ariaLabel="Afficher la minimap"
+          compact
+        />
+        <BarButton
+          icon="fa-solid fa-book"
+          label="Journal"
+          active={showCaptainLog}
+          onClick={() => setShowCaptainLog(!showCaptainLog)}
+          ariaLabel="Afficher le journal"
+          compact
         />
         <BarButton
           icon={`fa-solid ${audioEnabled ? "fa-volume-high" : "fa-volume-xmark"}`}
           label="Audio"
           active={audioEnabled}
           onClick={() => setAudioEnabled(!audioEnabled)}
-          ariaLabel="Toggle audio"
+          ariaLabel="Activer l'audio"
+          compact
         />
       </div>
 
-      <div className="bottom-bar-divider" />
+      <div className="bottom-bar-divider" aria-hidden />
 
-      <div className="bottom-bar-section bottom-bar-time">
+      <div className="bottom-bar-group bottom-bar-time" aria-label="Temps">
         <button
           type="button"
           className="bottom-bar-btn bottom-bar-btn-sm"
           onClick={decreaseTime}
-          aria-label="Slow time"
+          aria-label="Ralentir le temps"
+          title="Ralentir"
         >
           −
         </button>
         <span className="bottom-bar-time-value">
-          {stopOrbits ? "pause" : `${timeScale.toFixed(1)}x`}
+          {stopOrbits ? "‖" : `${timeScale.toFixed(1)}×`}
         </span>
         <button
           type="button"
           className="bottom-bar-btn bottom-bar-btn-sm"
           onClick={increaseTime}
-          aria-label="Speed up time"
+          aria-label="Accélérer le temps"
+          title="Accélérer"
         >
           +
         </button>
         <button
           type="button"
           className="bottom-bar-btn bottom-bar-btn-sm"
+          onClick={handleStopOrbit}
+          aria-label={stopOrbits ? "Reprendre" : "Pause"}
+          title={stopOrbits ? "Reprendre" : "Pause"}
+        >
+          <i className={`fa-solid ${stopOrbits ? "fa-play" : "fa-pause"}`} />
+        </button>
+        <button
+          type="button"
+          className="bottom-bar-btn bottom-bar-btn-sm"
           onClick={resetTime}
-          aria-label="Reset time"
-          title="Reset"
+          aria-label="Réinitialiser le temps"
+          title="Réinitialiser"
         >
           ↺
         </button>
-        <BarButton
-          icon={`fa-solid ${stopOrbits ? "fa-play" : "fa-pause"}`}
-          label={stopOrbits ? "Play" : "Pause"}
-          active={stopOrbits}
-          onClick={handleStopOrbit}
-          ariaLabel={stopOrbits ? "Resume orbits" : "Pause orbits"}
-        />
       </div>
 
-      <div className="bottom-bar-divider" />
+      <div className="bottom-bar-divider" aria-hidden />
 
-      <div className="bottom-bar-section">
+      <div className="bottom-bar-group" aria-label="Navigation">
         <BarButton
           icon="fa-brands fa-space-awesome"
-          label="Vol"
+          label="Vol libre"
           active={moveState.isFlyMode}
           inactive={!moveState.isFlyMode}
           onClick={toggleFlyMode}
-          ariaLabel="Toggle fly mode"
+          ariaLabel="Mode vol"
+          compact
         />
         <button
           type="button"
-          className={`bottom-bar-btn bottom-bar-btn-text ${!canRemovePlanet ? "inactive" : ""}`}
+          className={`bottom-bar-btn bottom-bar-btn-icon ${!canRemovePlanet ? "inactive" : ""}`}
           onClick={removePlanet}
           disabled={!canRemovePlanet}
-          aria-label="Remove selected planet"
+          aria-label="Supprimer planète"
           title={
             canRemovePlanet
               ? "Supprimer la planète sélectionnée"
-              : "Sélectionne une planète (il doit en rester au moins une)"
+              : "Sélectionne une planète"
           }
         >
           <i className="fa-solid fa-minus" />
-          <span className="bottom-bar-label">Planète</span>
         </button>
         <button
           type="button"
-          className="bottom-bar-btn bottom-bar-btn-text"
+          className="bottom-bar-btn bottom-bar-btn-icon"
           onClick={addPlanet}
-          aria-label="Add planet to system"
+          aria-label="Ajouter planète"
+          title="Ajouter une planète"
         >
           <i className="fa-solid fa-plus" />
-          <span className="bottom-bar-label">Planète</span>
         </button>
       </div>
     </nav>

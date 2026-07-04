@@ -44,14 +44,19 @@ function addDustCloud(group, sunSize, count) {
 }
 
 export const StellarObjects = ({ stellarType, orbitCenter, sunSize }) => {
-  const { scene, timeScale, stopOrbits } = useContext(PlanetContext);
+  const { scene, timeScale, stopOrbits, pulsarSurgeActive } =
+    useContext(PlanetContext);
   const groupRef = useRef(null);
+  const beamMaterialsRef = useRef([]);
+  const surgeRef = useRef(false);
+  surgeRef.current = pulsarSurgeActive;
 
   useEffect(() => {
     if (!scene || stellarType === "single") return;
 
     const group = new THREE.Group();
     groupRef.current = group;
+    beamMaterialsRef.current = [];
 
     if (stellarType === "binary") {
       const companion = new THREE.Mesh(
@@ -86,7 +91,9 @@ export const StellarObjects = ({ stellarType, orbitCenter, sunSize }) => {
       const beam1 = new THREE.Mesh(beamGeometry, beamMaterial);
       beam1.rotation.x = Math.PI / 2;
       const beam2 = beam1.clone();
+      beam2.material = beamMaterial.clone();
       beam2.rotation.x = -Math.PI / 2;
+      beamMaterialsRef.current = [beam1.material, beam2.material];
       enableBloomLayer(beam1);
       enableBloomLayer(beam2);
       group.add(beam1, beam2);
@@ -99,7 +106,12 @@ export const StellarObjects = ({ stellarType, orbitCenter, sunSize }) => {
     let frameId;
     const animate = () => {
       if (groupRef.current && !stopOrbits) {
-        groupRef.current.rotation.y += 0.002 * timeScale;
+        const rotSpeed = surgeRef.current ? 0.012 : 0.002;
+        groupRef.current.rotation.y += rotSpeed * timeScale;
+      }
+      for (const mat of beamMaterialsRef.current) {
+        const target = surgeRef.current ? 0.9 : 0.35;
+        mat.opacity += (target - mat.opacity) * 0.08;
       }
       frameId = requestAnimationFrame(animate);
     };
@@ -110,6 +122,7 @@ export const StellarObjects = ({ stellarType, orbitCenter, sunSize }) => {
       scene.remove(group);
       disposeObject(group);
       groupRef.current = null;
+      beamMaterialsRef.current = [];
     };
   }, [scene, stellarType, orbitCenter, sunSize, timeScale, stopOrbits]);
 

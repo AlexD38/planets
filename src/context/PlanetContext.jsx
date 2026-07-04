@@ -20,6 +20,7 @@ import {
   SUN_SIZE_MAX,
 } from "../utils/generateSystem";
 import { getOrbitPosition } from "../utils/orbit";
+import { approachPlanetMessage, systemLoadedMessage } from "../utils/logMessages";
 import {
   setSeed,
   getSeedFromUrl,
@@ -102,6 +103,15 @@ export const PlanetProvider = ({ children }) => {
   const [bloomEnabled, setBloomEnabled] = useState(true);
   const [lowQuality, setLowQuality] = useState(window.innerWidth < 768);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [logEntries, setLogEntries] = useState([]);
+  const [showCaptainLog, setShowCaptainLog] = useState(false);
+  const [simulatedTime, setSimulatedTime] = useState(0);
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [auroraPlanetId, setAuroraPlanetId] = useState(null);
+  const [pulsarSurgeActive, setPulsarSurgeActive] = useState(false);
+  const logIdRef = useRef(0);
+  const systemLoggedRef = useRef(false);
+  const simulatedTimeRef = useRef(0);
   const [moveState, setMoveState] = useState({
     thrust: 0,
     thrustReverse: 0,
@@ -127,6 +137,18 @@ export const PlanetProvider = ({ children }) => {
     return selectableMeshesRef.current.get(mesh.uuid)?.planetData ?? null;
   }, []);
 
+  const addLogEntry = useCallback((text) => {
+    if (!text) return;
+    setLogEntries((prev) => {
+      const entry = {
+        id: `log-${++logIdRef.current}`,
+        text,
+        ts: simulatedTimeRef.current,
+      };
+      return [entry, ...prev].slice(0, 8);
+    });
+  }, []);
+
   const flyToPlanet = useCallback((planet, systemIndex = 0) => {
     if (!planet?.orbit) return;
     const system = systems[systemIndex];
@@ -134,7 +156,8 @@ export const PlanetProvider = ({ children }) => {
     const orbitCenter = { x: system.x, y: system.y, z: system.z };
     setSelectedPlanet(planet);
     setFlyToTarget({ planet, orbitCenter });
-  }, [systems]);
+    addLogEntry(approachPlanetMessage(planet));
+  }, [systems, addLogEntry]);
 
   const addPlanet = useCallback(() => {
     let newPlanet = null;
@@ -206,6 +229,19 @@ export const PlanetProvider = ({ children }) => {
       setPlanetInfos(selectedPlanet);
     }
   }, [selectedPlanet]);
+
+  useEffect(() => {
+    if (systemLoggedRef.current || !systems[0]) return;
+    systemLoggedRef.current = true;
+    const sys = systems[0];
+    setLogEntries([
+      {
+        id: "log-init",
+        text: systemLoadedMessage(sys.sunName, sys.planets.length),
+        ts: 0,
+      },
+    ]);
+  }, [systems]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -352,6 +388,19 @@ export const PlanetProvider = ({ children }) => {
       setLowQuality,
       audioEnabled,
       setAudioEnabled,
+      logEntries,
+      addLogEntry,
+      showCaptainLog,
+      setShowCaptainLog,
+      simulatedTime,
+      setSimulatedTime,
+      simulatedTimeRef,
+      activeEvent,
+      setActiveEvent,
+      auroraPlanetId,
+      setAuroraPlanetId,
+      pulsarSurgeActive,
+      setPulsarSurgeActive,
       registerSelectable,
       unregisterSelectable,
       getSelectableMeshes,
@@ -393,6 +442,13 @@ export const PlanetProvider = ({ children }) => {
       bloomEnabled,
       lowQuality,
       audioEnabled,
+      logEntries,
+      addLogEntry,
+      showCaptainLog,
+      simulatedTime,
+      activeEvent,
+      auroraPlanetId,
+      pulsarSurgeActive,
       registerSelectable,
       unregisterSelectable,
       getSelectableMeshes,

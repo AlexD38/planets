@@ -3,7 +3,7 @@ import { PlanetContext } from "../context/PlanetContext";
 import { getOrbitPosition } from "../utils/orbit";
 import "./styles.css";
 
-const MAP_SIZE = 140;
+const MAP_SIZE = 120;
 const PADDING = 10;
 
 export const SystemMinimap = () => {
