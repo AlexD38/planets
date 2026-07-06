@@ -216,33 +216,33 @@ function buildCaptainPresenceMessages(system) {
   const intelligent = pick(intelligentPlanets(system));
   const messages = [
     "Votre présence semble avoir été remarquée",
-    "Capitaine, un observateur passif semble suivre votre trajectoire",
+    "Un observateur passif semble suivre votre trajectoire",
     "On dirait que quelqu'un — ou quelque chose — vous observe",
     "Votre vaisseau laisse une signature thermique reconnaissable à grande distance",
     "Le système réagit à votre passage : micro-variations dans le bruit de fond",
-    "Capitaine, vos capteurs enregistrent un silence… puis un léger pic d'attention",
+    "Vos capteurs enregistrent un silence… puis un léger pic d'attention",
     "Vous avez l'impression d'être attendu ici",
     "Une onde faible semble se propager depuis votre position — comme un écho",
-    "Capitaine, votre ombre orbitale est peut-être visible depuis certaines surfaces",
+    "Votre ombre orbitale est peut-être visible depuis certaines surfaces",
     "Quelque chose dans ce secteur semble s'être réveillé à votre arrivée",
     "Votre présence perturbe à peine l'équilibre local — assez pour être sentie",
-    "Capitaine, le journal automatique note : « intrus bienveillant ? »",
+    "Le journal automatique note : « intrus bienveillant ? »",
     "Vous n'êtes peut-être pas seul à regarder les étoiles ce soir",
     "Un frisson traverse les instruments — réaction à votre proximité, peut-être",
-    "Capitaine, on vous conseille de rester vigilant : vous êtes remarquable",
+    "On vous conseille de rester vigilant : vous êtes remarquable",
   ];
 
   if (inhabited) {
     messages.push(
       `Des habitants de ${inhabited.name} pourraient venir de voir votre vaisseau traverser le ciel`,
-      `Capitaine, ${inhabited.name} enregistre peut-être déjà votre passage dans ses annales`,
+      `${inhabited.name} enregistre peut-être déjà votre passage dans ses annales`,
     );
   }
 
   if (intelligent) {
     messages.push(
       `Votre présence n'a pas échappé à ${intelligent.name} — signal dirigé vers vous ?`,
-      `Capitaine, ${intelligent.name} semble vous sonder : « qui êtes-vous ? »`,
+      `${intelligent.name} semble vous sonder : « qui êtes-vous ? »`,
       `Quelqu'un sur ${intelligent.name} vient peut-être de vous repérer`,
     );
   }
@@ -250,13 +250,13 @@ function buildCaptainPresenceMessages(system) {
   if (planet) {
     messages.push(
       `En approchant de ${planet.name}, vous sentez le poids d'un regard invisible`,
-      `Capitaine, ${planet.name} semble plus silencieuse depuis que vous êtes là`,
+      `${planet.name} semble plus silencieuse depuis que vous êtes là`,
     );
   }
 
   if (system?.stellarType === "pulsar") {
     messages.push(
-      "Capitaine, le pulsar balaie votre coque à chaque rotation — comme un projecteur sur vous",
+      "Le pulsar balaie votre coque à chaque rotation — comme un projecteur sur vous",
     );
   }
 
