@@ -6,12 +6,13 @@ const MAX_SHIFT_X = 16;
 const MAX_SHIFT_Y = 12;
 const MAX_ROLL = 1.6;
 const THRUST_SHIFT = 8;
+const THRUST_SCALE = 0.976;
 const SMOOTH = 0.14;
 
 export const CockpitOverlay = () => {
   const { moveState } = useContext(PlanetContext);
   const imgRef = useRef(null);
-  const offset = useRef({ x: 0, y: 0, r: 0 });
+  const offset = useRef({ x: 0, y: 0, r: 0, s: 1 });
   const moveStateRef = useRef(moveState);
   moveStateRef.current = moveState;
 
@@ -20,7 +21,7 @@ export const CockpitOverlay = () => {
       if (imgRef.current) {
         imgRef.current.style.transform = "";
       }
-      offset.current = { x: 0, y: 0, r: 0 };
+      offset.current = { x: 0, y: 0, r: 0, s: 1 };
       return;
     }
 
@@ -43,14 +44,16 @@ export const CockpitOverlay = () => {
       const targetX = -roll * MAX_SHIFT_X;
       const targetY = -(pitch * MAX_SHIFT_Y + accel * THRUST_SHIFT);
       const targetR = -roll * MAX_ROLL;
+      const targetS = thrust ? THRUST_SCALE : 1;
 
       const o = offset.current;
       o.x += (targetX - o.x) * SMOOTH;
       o.y += (targetY - o.y) * SMOOTH;
       o.r += (targetR - o.r) * SMOOTH;
+      o.s += (targetS - o.s) * SMOOTH;
 
       if (imgRef.current) {
-        imgRef.current.style.transform = `translate3d(${o.x}px, ${o.y}px, 0) rotate(${o.r}deg)`;
+        imgRef.current.style.transform = `translate3d(${o.x}px, ${o.y}px, 0) rotate(${o.r}deg) scale(${o.s})`;
       }
 
       frame = requestAnimationFrame(tick);
