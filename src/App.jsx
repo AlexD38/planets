@@ -13,6 +13,7 @@ import { CaptainLog } from "./components/CaptainLog";
 import { FlyTouchControls } from "./components/FlyTouchControls";
 import { CockpitOverlay } from "./components/CockpitOverlay";
 import { RareEvents } from "./components/RareEvents";
+import { AmbientCaptainLog } from "./components/AmbientCaptainLog";
 import { BlackHole, STELLAR_CORE_COLORS } from "./components/BlackHole";
 import { PlanetLabels } from "./components/PlanetLabels";
 import { SystemMinimap } from "./components/SystemMinimap";
@@ -654,6 +655,7 @@ export default function App() {
       <FlyTouchControls />
       <PlanetLabels />
       <RareEvents />
+      <AmbientCaptainLog />
 
       {scene && (
         <>

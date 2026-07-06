@@ -21,6 +21,7 @@ import {
 } from "../utils/generateSystem";
 import { getOrbitPosition } from "../utils/orbit";
 import { approachPlanetMessage, systemLoadedMessage } from "../utils/logMessages";
+import { playLogBeep } from "../utils/spaceAudio";
 import {
   setSeed,
   getSeedFromUrl,
@@ -143,8 +144,9 @@ export const PlanetProvider = ({ children }) => {
     return selectableMeshesRef.current.get(mesh.uuid)?.planetData ?? null;
   }, []);
 
-  const addLogEntry = useCallback((text) => {
+  const addLogEntry = useCallback((text, { beep = true } = {}) => {
     if (!text) return;
+    if (beep && audioEnabled) playLogBeep();
     setLogEntries((prev) => {
       const entry = {
         id: `log-${++logIdRef.current}`,
@@ -153,7 +155,7 @@ export const PlanetProvider = ({ children }) => {
       };
       return [entry, ...prev].slice(0, 8);
     });
-  }, []);
+  }, [audioEnabled]);
 
   const flyToPlanet = useCallback((planet, systemIndex = 0) => {
     if (!planet?.orbit) return;

@@ -23,7 +23,7 @@ export const RareEvents = () => {
   useEffect(() => {
     schedulerRef.current = createRareEventScheduler({
       onEvent: (event, message) => {
-        addLogEntry(message);
+        addLogEntry(message, { beep: false });
         setActiveEvent(event);
         if (event.type === "aurora") setAuroraPlanetId(event.planetId);
         if (event.type === "pulsarSurge") setPulsarSurgeActive(true);

@@ -1,10 +1,12 @@
 let audioContext = null;
 let masterGain = null;
+let sfxGain = null;
 let droneGain = null;
 let warmthGain = null;
 let noiseNode = null;
 let lowpassFilter = null;
 let warmthOsc = null;
+let audioActive = false;
 
 function getAudioNodes() {
   if (!audioContext) {
@@ -13,6 +15,10 @@ function getAudioNodes() {
     masterGain = audioContext.createGain();
     masterGain.gain.value = 0.08;
     masterGain.connect(audioContext.destination);
+
+    sfxGain = audioContext.createGain();
+    sfxGain.gain.value = 0;
+    sfxGain.connect(audioContext.destination);
 
     droneGain = audioContext.createGain();
     droneGain.gain.value = 0.7;
@@ -54,6 +60,7 @@ function getAudioNodes() {
   return {
     audioContext,
     masterGain,
+    sfxGain,
     droneGain,
     warmthGain,
     noiseNode,
@@ -62,41 +69,54 @@ function getAudioNodes() {
 }
 
 export function startSpaceAudio() {
-  const { audioContext: ctx, noiseNode: noise, masterGain: master } = getAudioNodes();
+  const { audioContext: ctx, noiseNode: noise, masterGain: master, sfxGain: sfx } =
+    getAudioNodes();
   if (ctx.state === "suspended") ctx.resume();
   if (noise && !noise._started) {
     noise.start();
     noise._started = true;
   }
+  audioActive = true;
   if (master) master.gain.value = 0.08;
+  if (sfx) sfx.gain.value = 0.14;
 }
 
 export function stopSpaceAudio() {
+  audioActive = false;
   if (masterGain) masterGain.gain.value = 0;
+  if (sfxGain) sfxGain.gain.value = 0;
 }
 
 export function setSpaceAudioVolume(volume) {
   if (masterGain) masterGain.gain.value = Math.max(0, Math.min(0.2, volume));
 }
 
-export function playRadarPing() {
-  const { audioContext: ctx, masterGain: master } = getAudioNodes();
-  if (!ctx || !master || master.gain.value === 0) return;
+function playSfxTone({ frequency, peakGain, attack = 0.01, decay = 0.14 }) {
+  const { audioContext: ctx, sfxGain: sfx } = getAudioNodes();
+  if (!ctx || !sfx || !audioActive) return;
   if (ctx.state === "suspended") ctx.resume();
 
   const osc = ctx.createOscillator();
-  const pingGain = ctx.createGain();
+  const toneGain = ctx.createGain();
   osc.type = "sine";
-  osc.frequency.value = 820;
-  pingGain.gain.value = 0.0001;
-  osc.connect(pingGain);
-  pingGain.connect(master);
+  osc.frequency.value = frequency;
+  toneGain.gain.value = 0.0001;
+  osc.connect(toneGain);
+  toneGain.connect(sfx);
 
   const now = ctx.currentTime;
-  pingGain.gain.exponentialRampToValueAtTime(0.06, now + 0.02);
-  pingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+  toneGain.gain.exponentialRampToValueAtTime(peakGain, now + attack);
+  toneGain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
   osc.start(now);
-  osc.stop(now + 0.4);
+  osc.stop(now + decay + 0.03);
+}
+
+export function playRadarPing() {
+  playSfxTone({ frequency: 820, peakGain: 0.12, attack: 0.02, decay: 0.35 });
+}
+
+export function playLogBeep() {
+  playSfxTone({ frequency: 620, peakGain: 0.09, attack: 0.008, decay: 0.1 });
 }
 
 export function updateSpaceAudioAmbience({
@@ -107,7 +127,7 @@ export function updateSpaceAudioAmbience({
 } = {}) {
   const { lowpassFilter: lp, warmthGain: warm, masterGain: master, droneGain: drone } =
     getAudioNodes();
-  if (!master || master.gain.value === 0) return;
+  if (!master || !audioActive) return;
 
   const sunProx = 1 - Math.min(distToSun / 400, 1);
   const bodyProx = 1 - Math.min(distToNearestBody / 80, 1);
