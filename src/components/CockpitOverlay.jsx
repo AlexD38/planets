@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef } from "react";
 import { PlanetContext } from "../context/PlanetContext";
+import { playNavigatorWelcome } from "../utils/navigatorVoice";
 import cockpitImg from "../assets/cockpit.png";
 
 const MAX_SHIFT_X = 16;
@@ -10,11 +11,19 @@ const THRUST_SCALE = 0.976;
 const SMOOTH = 0.14;
 
 export const CockpitOverlay = () => {
-  const { moveState } = useContext(PlanetContext);
+  const { moveState, audioEnabled } = useContext(PlanetContext);
   const imgRef = useRef(null);
+  const welcomedRef = useRef(false);
   const offset = useRef({ x: 0, y: 0, r: 0, s: 1 });
   const moveStateRef = useRef(moveState);
   moveStateRef.current = moveState;
+
+  useEffect(() => {
+    if (moveState.isFlyMode && audioEnabled && !welcomedRef.current) {
+      welcomedRef.current = true;
+      playNavigatorWelcome();
+    }
+  }, [moveState.isFlyMode, audioEnabled]);
 
   useEffect(() => {
     if (!moveState.isFlyMode) {

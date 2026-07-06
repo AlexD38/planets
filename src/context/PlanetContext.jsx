@@ -109,9 +109,9 @@ export const PlanetProvider = ({ children }) => {
   const [showMinimap, setShowMinimap] = useState(() => !isMobileViewport());
   const [bloomEnabled, setBloomEnabled] = useState(true);
   const [lowQuality, setLowQuality] = useState(isMobileViewport);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const [logEntries, setLogEntries] = useState([]);
-  const [showCaptainLog, setShowCaptainLog] = useState(false);
+  const [showCaptainLog, setShowCaptainLog] = useState(true);
   const [simulatedTime, setSimulatedTime] = useState(0);
   const [activeEvent, setActiveEvent] = useState(null);
   const [auroraPlanetId, setAuroraPlanetId] = useState(null);

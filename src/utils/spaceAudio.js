@@ -91,6 +91,11 @@ export function setSpaceAudioVolume(volume) {
   if (masterGain) masterGain.gain.value = Math.max(0, Math.min(0.2, volume));
 }
 
+export function getSfxAudioBus() {
+  const { audioContext, sfxGain } = getAudioNodes();
+  return { ctx: audioContext, sfx: sfxGain, active: audioActive };
+}
+
 function playSfxTone({ frequency, peakGain, attack = 0.01, decay = 0.14 }) {
   const { audioContext: ctx, sfxGain: sfx } = getAudioNodes();
   if (!ctx || !sfx || !audioActive) return;
