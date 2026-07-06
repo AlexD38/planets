@@ -129,7 +129,10 @@ export const PlanetInfos = () => {
           ? "Planète : "
           : "Système : ";
 
-    typewriter
+    const planetCount =
+      currentSystem?.planets?.length ?? systemInfos?.numberOfPlanets ?? 0;
+
+    const typewriterChain = typewriter
       .typeString(scanLabel)
       .pauseFor(200)
       .typeString(".")
@@ -143,13 +146,21 @@ export const PlanetInfos = () => {
       .typeString("<br>")
       .typeString(targetLabel)
       .pauseFor(400)
-      .typeString(`${activePlanet.name}.`)
-      .pauseFor(400)
-      .callFunction(() => setScanDone(true))
-      .start();
+      .typeString(`${activePlanet.name}.`);
+
+    if (!selectedPlanet) {
+      typewriterChain
+        .pauseFor(400)
+        .typeString("<br>")
+        .typeString("Planètes recensées : ")
+        .pauseFor(300)
+        .typeString(`${planetCount}.`);
+    }
+
+    typewriterChain.pauseFor(400).callFunction(() => setScanDone(true)).start();
 
     return () => typewriter.stop();
-  }, [activePlanetKey, selectedPlanet, activePlanet]);
+  }, [activePlanetKey, selectedPlanet, activePlanet, currentSystem, systemInfos]);
 
   if (!activePlanet || !planetInfosDisplay) return null;
 

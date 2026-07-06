@@ -69,6 +69,10 @@ function getInitialState() {
   return buildStateFromSeed(seed);
 }
 
+function isMobileViewport() {
+  return window.innerWidth < 768 || window.matchMedia("(pointer: coarse)").matches;
+}
+
 export const PlanetProvider = ({ children }) => {
   const [initialState] = useState(getInitialState);
   const [systems, setSystems] = useState(initialState.systems);
@@ -81,8 +85,10 @@ export const PlanetProvider = ({ children }) => {
   const [planetObj, setPlanetObj] = useState(null);
   const [planetObj2, setPlanetObj2] = useState(null);
   const [planetSize, setPlanetSize] = useState(null);
-  const [planetInfosDisplay, setPlanetInfosDisplay] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [planetInfosDisplay, setPlanetInfosDisplay] = useState(
+    () => !isMobileViewport(),
+  );
+  const [isMobile, setIsMobile] = useState(isMobileViewport);
   const [scene, setScene] = useState(null);
   const [stars1, setStars1] = useState(null);
   const [sun, setSun] = useState(null);
@@ -99,9 +105,9 @@ export const PlanetProvider = ({ children }) => {
   const [timeScale, setTimeScale] = useState(1);
   const [showOrbitPaths, setShowOrbitPaths] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
-  const [showMinimap, setShowMinimap] = useState(true);
+  const [showMinimap, setShowMinimap] = useState(() => !isMobileViewport());
   const [bloomEnabled, setBloomEnabled] = useState(true);
-  const [lowQuality, setLowQuality] = useState(window.innerWidth < 768);
+  const [lowQuality, setLowQuality] = useState(isMobileViewport);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [logEntries, setLogEntries] = useState([]);
   const [showCaptainLog, setShowCaptainLog] = useState(false);
@@ -312,10 +318,12 @@ export const PlanetProvider = ({ children }) => {
     };
 
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
+      const mobile = isMobileViewport();
       setIsMobile(mobile);
       setLowQuality(mobile);
     };
+
+    window.addEventListener("orientationchange", handleResize);
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -325,6 +333,7 @@ export const PlanetProvider = ({ children }) => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
     };
   }, []);
 
@@ -406,6 +415,7 @@ export const PlanetProvider = ({ children }) => {
       getSelectableMeshes,
       getPlanetDataFromMesh,
       moveState,
+      setMoveState,
       toggleFlyMode,
       getOrbitPosition,
     }),
@@ -454,6 +464,7 @@ export const PlanetProvider = ({ children }) => {
       getSelectableMeshes,
       getPlanetDataFromMesh,
       moveState,
+      setMoveState,
       toggleFlyMode,
     ],
   );

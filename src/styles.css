@@ -228,12 +228,62 @@
 }
 
 @media (max-width: 768px) {
+  .hud-panel::before,
+  .hud-panel::after {
+    width: 10px;
+    height: 10px;
+  }
+
   .captain-log-entry {
-    grid-template-columns: 3.2rem 1fr;
+    grid-template-columns: 3rem 1fr;
   }
 
   .planet-infos-container {
     font-size: 0.72rem;
     padding: 0.65rem 0.75rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scan-sections {
+    max-height: min(28vh, 240px);
+  }
+
+  .planet-infos-row {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .planet-infos-row-label {
+    font-size: 0.62rem;
+  }
+
+  .planet-infos-row-value {
+    font-size: 0.74rem;
+  }
+
+  .planet-infos-actions {
+    gap: 0.4rem;
+    margin-top: 0.65rem;
+  }
+
+  .planet-infos-btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-height: 2.75rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.72rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .captain-log-list {
+    max-height: 4.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .planet-infos-btn {
+    flex: 1 1 100%;
   }
 }

@@ -4,6 +4,10 @@
   --hud-inset: 0.85rem;
   --hud-bar-offset: 4.75rem;
   --hud-col-width: min(340px, calc(50vw - var(--hud-inset) - 0.5rem));
+  --hud-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hud-safe-top: env(safe-area-inset-top, 0px);
+  --hud-safe-left: env(safe-area-inset-left, 0px);
+  --hud-safe-right: env(safe-area-inset-right, 0px);
 
   position: fixed;
   inset: 0;
@@ -23,53 +27,88 @@
 }
 
 .hud-zone-tl {
-  top: var(--hud-inset);
-  left: var(--hud-inset);
+  top: calc(var(--hud-inset) + var(--hud-safe-top));
+  left: calc(var(--hud-inset) + var(--hud-safe-left));
   width: var(--hud-col-width);
   max-height: calc(46vh - var(--hud-inset));
 }
 
 .hud-zone-tr {
-  top: var(--hud-inset);
-  right: var(--hud-inset);
+  top: calc(var(--hud-inset) + var(--hud-safe-top));
+  right: calc(var(--hud-inset) + var(--hud-safe-right));
   width: auto;
   max-width: calc(50vw - var(--hud-inset));
   align-items: flex-end;
 }
 
 .hud-zone-bl {
-  bottom: var(--hud-bar-offset);
-  left: var(--hud-inset);
+  bottom: calc(var(--hud-bar-offset) + var(--hud-safe-bottom));
+  left: calc(var(--hud-inset) + var(--hud-safe-left));
   width: var(--hud-col-width);
   max-height: calc(28vh - var(--hud-inset));
 }
 
+/* ── Tablet & mobile ── */
+
 @media (max-width: 768px) {
   .hud-shell {
-    --hud-inset: 0.6rem;
-    --hud-bar-offset: 4.25rem;
-    --hud-col-width: min(280px, calc(100vw - 1.2rem));
+    --hud-inset: 0.5rem;
+    --hud-bar-offset: calc(5.5rem + var(--hud-safe-bottom));
+    --hud-col-width: calc(100vw - var(--hud-inset) * 2 - var(--hud-safe-left) - var(--hud-safe-right));
   }
 
   .hud-zone-tl {
-    max-height: calc(38vh - var(--hud-inset));
-  }
-
-  .hud-zone-bl {
-    max-height: calc(22vh - var(--hud-inset));
+    max-height: min(34vh, 280px);
   }
 
   .hud-zone-tr {
-    max-width: calc(100vw - 1.2rem);
+    top: auto;
+    bottom: calc(var(--hud-bar-offset) + 0.35rem);
+    right: calc(var(--hud-inset) + var(--hud-safe-right));
+    left: auto;
+    max-width: none;
+  }
+
+  .hud-zone-bl {
+    bottom: calc(var(--hud-bar-offset) + 0.35rem);
+    left: calc(var(--hud-inset) + var(--hud-safe-left));
+    right: calc(7.5rem + var(--hud-inset) + var(--hud-safe-right));
+    width: auto;
+    max-height: min(20vh, 120px);
+  }
+}
+
+/* ── Small phones ── */
+
+@media (max-width: 480px) {
+  .hud-shell {
+    --hud-bar-offset: calc(6.75rem + var(--hud-safe-bottom));
+  }
+
+  .hud-zone-tl {
+    max-height: min(30vh, 220px);
+  }
+
+  .hud-zone-bl {
+    right: calc(6.5rem + var(--hud-inset) + var(--hud-safe-right));
+    max-height: 5.5rem;
   }
 }
 
 @media (max-height: 640px) {
   .hud-zone-tl {
-    max-height: calc(34vh - var(--hud-inset));
+    max-height: calc(30vh - var(--hud-inset));
   }
 
   .hud-zone-bl {
-    max-height: 5.5rem;
+    max-height: 4.5rem;
+  }
+}
+
+/* When scan panel expanded on mobile, tuck minimap smaller */
+@media (max-width: 768px) {
+  .hud-zone-tl:has(.planet-infos-container) ~ .hud-zone-tr .system-minimap {
+    transform: scale(0.88);
+    transform-origin: bottom right;
   }
 }

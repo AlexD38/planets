@@ -28,8 +28,8 @@ export const Stars = () => {
   useEffect(() => {
     if (!scene || objectsRef.current.length > 0) return;
 
-    const starCount = 2000;
-    const starCount2 = 250;
+    const starCount = 1200;
+    const starCount2 = 180;
     const starCount3 = 15;
     const starCount4 = 8;
     const starCount5 = 10;

@@ -78,7 +78,7 @@ export function createRareEventScheduler({ onEvent, onEventEnd }) {
 
       for (const moon of planet.moons) {
         const moonOrbit = {
-          radius: moon.orbitRadius,
+          radius: moon.radius ?? moon.orbitRadius,
           angle: moon.angle ?? 0,
           speed: moon.speed,
         };

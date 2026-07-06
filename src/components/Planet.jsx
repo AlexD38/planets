@@ -13,21 +13,27 @@ import { Satellite } from "./Satellite";
 import { SunHalo } from "./SunHalo";
 
 function createRockRingBand(count, planetSize, radiusMin, radiusMax, angleSteps) {
-  const geometry = new THREE.DodecahedronGeometry(0.05, 0);
+  const rockSize = Math.max(0.08, planetSize * 0.05);
+  const spreadY = Math.max(0.15, planetSize * 0.035);
+  const geometry = new THREE.DodecahedronGeometry(rockSize, 0);
   const material = new THREE.MeshStandardMaterial({
     color: 0xc4b5a0,
-    metalness: 0.7,
-    roughness: 0.95,
+    metalness: 0.55,
+    roughness: 0.88,
+    emissive: 0x332211,
+    emissiveIntensity: 0.15,
   });
   const mesh = new THREE.InstancedMesh(geometry, material, count);
   const dummy = new THREE.Object3D();
+  const radiusScale = Math.max(1, planetSize * 0.08);
 
   for (let i = 0; i < count; i++) {
     const angle = (i / angleSteps) * Math.PI * 2;
-    const radius = planetSize + utils.randomBetween(radiusMin, radiusMax);
+    const radius =
+      planetSize + utils.randomBetween(radiusMin, radiusMax) * radiusScale;
     dummy.position.set(
       Math.cos(angle) * radius,
-      (Math.random() - 0.5) * 0.2,
+      (Math.random() - 0.5) * spreadY,
       Math.sin(angle) * radius,
     );
     dummy.rotation.set(
@@ -35,7 +41,7 @@ function createRockRingBand(count, planetSize, radiusMin, radiusMax, angleSteps)
       Math.random() * Math.PI,
       Math.random() * Math.PI,
     );
-    dummy.scale.setScalar(utils.randomBetween(0.2, 1.8));
+    dummy.scale.setScalar(utils.randomBetween(0.5, 2.4));
     dummy.updateMatrix();
     mesh.setMatrixAt(i, dummy.matrix);
   }
@@ -122,6 +128,8 @@ export const Planet = ({
 
     const planetMaterial = new THREE.MeshStandardMaterial({
       ...baseOptions,
+      roughness: baseOptions.roughness ?? 0.82,
+      metalness: baseOptions.metalness ?? 0.04,
       transparent: false,
       opacity: 1,
       depthWrite: true,

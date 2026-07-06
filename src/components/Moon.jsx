@@ -3,18 +3,13 @@ import * as THREE from "three";
 import { PlanetContext } from "../context/PlanetContext";
 import { updateOrbit } from "../utils/orbit";
 
-function disposeMesh(mesh) {
-  if (!mesh) return;
-  mesh.traverse((child) => {
+function disposeObject(object) {
+  if (!object) return;
+  object.traverse((child) => {
     if (child.geometry) child.geometry.dispose();
     if (child.material) {
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
-      materials.forEach((material) => {
-        if (material.map) material.map.dispose();
-        material.dispose();
-      });
+      if (child.material.map) child.material.map.dispose();
+      child.material.dispose();
     }
   });
 }
@@ -23,22 +18,39 @@ export const Moon = ({ moon, planetPositionRef }) => {
   const { scene, renderer, camera, stopOrbits, timeScale } =
     useContext(PlanetContext);
   const moonRef = useRef(null);
-  const orbitRef = useRef({ ...moon });
+  const orbitRef = useRef({
+    radius: moon.radius ?? moon.orbitRadius,
+    speed: moon.speed,
+    angle: moon.angle,
+  });
   const animationFrameId = useRef();
+
+  useEffect(() => {
+    orbitRef.current.radius = moon.radius ?? moon.orbitRadius;
+    orbitRef.current.speed = moon.speed;
+    orbitRef.current.angle = moon.angle;
+  }, [moon.radius, moon.orbitRadius, moon.speed, moon.angle]);
 
   useEffect(() => {
     if (!scene) return;
 
-    const geometry = new THREE.SphereGeometry(moon.size, 16, 16);
+    const geometry = new THREE.SphereGeometry(moon.size, 20, 20);
     const texture = new THREE.TextureLoader().load("/textures/moon.png");
-    const material = new THREE.MeshStandardMaterial({ map: texture });
+    const material = new THREE.MeshStandardMaterial({
+      map: texture,
+      color: 0xffffff,
+      roughness: 0.92,
+      metalness: 0.04,
+      emissive: 0x222228,
+      emissiveIntensity: 0.12,
+    });
     const mesh = new THREE.Mesh(geometry, material);
     moonRef.current = mesh;
     scene.add(mesh);
 
     return () => {
       scene.remove(mesh);
-      disposeMesh(mesh);
+      disposeObject(mesh);
       texture.dispose();
       moonRef.current = null;
     };

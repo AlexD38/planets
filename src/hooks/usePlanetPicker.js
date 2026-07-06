@@ -16,16 +16,16 @@ export function usePlanetPicker(canvasRef) {
     if (!canvas || !camera) return;
 
     const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
+    const pointer = new THREE.Vector2();
 
-    const handleClick = (event) => {
+    const pickAt = (clientX, clientY) => {
       if (moveState.isFlyMode) return;
 
       const rect = canvas.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
-      raycaster.setFromCamera(mouse, camera);
+      raycaster.setFromCamera(pointer, camera);
       const meshes = getSelectableMeshes();
       const intersects = raycaster.intersectObjects(meshes);
 
@@ -35,8 +35,23 @@ export function usePlanetPicker(canvasRef) {
       }
     };
 
+    const handleClick = (event) => {
+      pickAt(event.clientX, event.clientY);
+    };
+
+    const handleTouchEnd = (event) => {
+      if (event.changedTouches.length !== 1) return;
+      const touch = event.changedTouches[0];
+      pickAt(touch.clientX, touch.clientY);
+    };
+
     canvas.addEventListener("click", handleClick);
-    return () => canvas.removeEventListener("click", handleClick);
+    canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [
     canvasRef,
     camera,

@@ -10,8 +10,10 @@ import { Stars } from "./components/stars";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { BottomBar } from "./components/BottomBar";
 import { CaptainLog } from "./components/CaptainLog";
+import { FlyTouchControls } from "./components/FlyTouchControls";
+import { CockpitOverlay } from "./components/CockpitOverlay";
 import { RareEvents } from "./components/RareEvents";
-import { BlackHole } from "./components/BlackHole";
+import { BlackHole, STELLAR_CORE_COLORS } from "./components/BlackHole";
 import { PlanetLabels } from "./components/PlanetLabels";
 import { SystemMinimap } from "./components/SystemMinimap";
 import { Nebula } from "./components/Nebula";
@@ -49,6 +51,44 @@ function disposeObject3D(object) {
   });
 }
 
+function isSunObject(object) {
+  let node = object;
+  while (node) {
+    if (node.userData?.planetId === "sun") return true;
+    node = node.parent;
+  }
+  return false;
+}
+
+function renderSunDepthMap(renderer, scene, camera, target) {
+  const toggled = [];
+  scene.traverse((obj) => {
+    if (!obj.isMesh) return;
+    toggled.push([obj, obj.visible]);
+    obj.visible = isSunObject(obj);
+  });
+
+  const prevTarget = renderer.getRenderTarget();
+  renderer.setRenderTarget(target);
+  renderer.clear();
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(prevTarget);
+
+  toggled.forEach(([obj, visible]) => {
+    obj.visible = visible;
+  });
+}
+
+function createDepthRenderTarget(width, height) {
+  const depthTexture = new THREE.DepthTexture(width, height);
+  return new THREE.WebGLRenderTarget(width, height, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    depthTexture,
+    depthBuffer: true,
+  });
+}
+
 function getNearestBodyDistance(camera, system) {
   if (!camera || !system) return 500;
   const orbitCenter = { x: system.x, y: system.y, z: system.z };
@@ -77,6 +117,8 @@ export default function App() {
   const bloomOverlayRef = useRef(null);
   const bloomPassRef = useRef(null);
   const captureRTRef = useRef(null);
+  const sunDepthRTRef = useRef(null);
+  const sunLightRef = useRef(null);
   const cinematicPostRef = useRef(null);
   const sceneInitRef = useRef(false);
   const mouseRef = useRef(new THREE.Vector2());
@@ -99,18 +141,22 @@ export default function App() {
         z: utils.randomBetween(0, 9),
       },
       position: {
-        x: utils.randomBetween(-1000, 1000),
-        y: utils.randomBetween(-1000, 1000),
-        z: utils.randomBetween(-1000, 1000),
+        x: utils.randomBetween(-700, 700),
+        y: utils.randomBetween(-400, 400),
+        z: utils.randomBetween(-700, 700),
       },
-      size: 10,
+      size: 18,
     }));
   }, []);
 
   const backgroundGalaxies = useMemo(() => {
     const count = Math.floor(utils.randomBetween(3, 5));
     return Array.from({ length: count }).map(() => {
-      const distance = utils.randomBetween(420, 750);
+      const brightCore = Math.random() < 0.38;
+      const isDistant = Math.random() < 0.5;
+      const distance = isDistant
+        ? utils.randomBetween(1500, 3200)
+        : utils.randomBetween(420, 900);
       const theta = utils.randomBetween(0, Math.PI * 2);
       const phi = Math.acos(utils.randomBetween(-1, 1));
       return {
@@ -126,7 +172,15 @@ export default function App() {
           y: distance * Math.sin(phi) * Math.sin(theta) * 0.45,
           z: distance * Math.cos(phi),
         },
-        size: utils.randomBetween(22, 36),
+        size: isDistant
+          ? utils.randomBetween(40, 62)
+          : utils.randomBetween(18, 32),
+        armSpread: utils.randomBetween(0.7, 9.5),
+        brightCore,
+        coreColor:
+          STELLAR_CORE_COLORS[
+            Math.floor(Math.random() * STELLAR_CORE_COLORS.length)
+          ],
       };
     });
   }, []);
@@ -206,6 +260,8 @@ export default function App() {
     const overlayMaterial = new THREE.ShaderMaterial({
       uniforms: {
         bloomTexture: { value: bloomComposer.readBuffer.texture },
+        sceneDepthTexture: { value: null },
+        sunDepthTexture: { value: null },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -216,9 +272,16 @@ export default function App() {
       `,
       fragmentShader: `
         uniform sampler2D bloomTexture;
+        uniform sampler2D sceneDepthTexture;
+        uniform sampler2D sunDepthTexture;
         varying vec2 vUv;
+
         void main() {
-          gl_FragColor = vec4(texture2D(bloomTexture, vUv).rgb, 1.0);
+          vec3 bloom = texture2D(bloomTexture, vUv).rgb;
+          float sceneZ = texture2D(sceneDepthTexture, vUv).r;
+          float sunZ = texture2D(sunDepthTexture, vUv).r;
+          float sunVisible = step(sunZ, sceneZ + 0.00015);
+          gl_FragColor = vec4(bloom * sunVisible, 1.0);
         }
       `,
       blending: THREE.AdditiveBlending,
@@ -228,28 +291,43 @@ export default function App() {
     overlayScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), overlayMaterial));
     bloomOverlayRef.current = { scene: overlayScene, camera: overlayCamera, material: overlayMaterial };
 
-    const captureRT = new THREE.WebGLRenderTarget(
+    const captureRT = createDepthRenderTarget(
       window.innerWidth,
       window.innerHeight,
-      { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter },
     );
     captureRTRef.current = captureRT;
+    const sunDepthRT = createDepthRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+    );
+    sunDepthRTRef.current = sunDepthRT;
+    overlayMaterial.uniforms.sceneDepthTexture.value = captureRT.depthTexture;
+    overlayMaterial.uniforms.sunDepthTexture.value = sunDepthRT.depthTexture;
     cinematicPostRef.current = createCinematicPost();
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
-    controls.rotateSpeed = 0.6;
+    controls.rotateSpeed = mobile ? 0.45 : 0.6;
+    controls.zoomSpeed = mobile ? 0.8 : 1;
     controls.minDistance = 20;
     controls.maxDistance = 1500;
+    controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_PAN,
+    };
     controlsRef.current = controls;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+    const ambientLight = new THREE.AmbientLight(0x8899bb, 0.28);
     scene.add(ambientLight);
 
-    const light = new THREE.PointLight(0xffffff, 5000, 0);
-    light.position.set(0, 0, 0);
-    scene.add(light);
+    const hemiLight = new THREE.HemisphereLight(0x6688cc, 0x221111, 0.18);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.PointLight(0xfff4e8, 6, 0, 0);
+    sunLight.position.set(0, 0, 0);
+    scene.add(sunLight);
+    sunLightRef.current = sunLight;
 
     const onMouseMove = (e) => {
       mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -262,6 +340,7 @@ export default function App() {
       renderer.setSize(window.innerWidth, window.innerHeight);
       bloomComposer.setSize(window.innerWidth, window.innerHeight);
       captureRTRef.current?.setSize(window.innerWidth, window.innerHeight);
+      sunDepthRTRef.current?.setSize(window.innerWidth, window.innerHeight);
     };
 
     window.addEventListener("mousemove", onMouseMove);
@@ -276,8 +355,10 @@ export default function App() {
       bloomOverlayRef.current?.material.dispose();
       bloomOverlayRef.current?.scene.children[0]?.geometry?.dispose();
       captureRTRef.current?.dispose();
+      sunDepthRTRef.current?.dispose();
       cinematicPostRef.current?.dispose();
       captureRTRef.current = null;
+      sunDepthRTRef.current = null;
       cinematicPostRef.current = null;
       renderer.dispose();
       disposeObject3D(scene);
@@ -352,6 +433,10 @@ export default function App() {
       : new THREE.Vector3(0, 0, 0);
     const distToSun = camera.position.distanceTo(sunPos);
     const isEclipse = activeEvent?.type === "eclipse";
+
+    if (sunLightRef.current) {
+      sunLightRef.current.position.copy(sunPos);
+    }
 
     if (moveState.isFlyMode) {
       const delta = clock.current.getDelta();
@@ -447,10 +532,21 @@ export default function App() {
         camera.layers.enable(0);
         camera.layers.enable(BLOOM_LAYER);
 
+        if (sunDepthRTRef.current) {
+          renderSunDepthMap(renderer, scene, camera, sunDepthRTRef.current);
+        }
+
         const { scene: overlayScene, camera: overlayCamera, material } =
           bloomOverlayRef.current;
         material.uniforms.bloomTexture.value =
           bloomComposerRef.current.readBuffer.texture;
+        if (captureRT.depthTexture) {
+          material.uniforms.sceneDepthTexture.value = captureRT.depthTexture;
+        }
+        if (sunDepthRTRef.current?.depthTexture) {
+          material.uniforms.sunDepthTexture.value =
+            sunDepthRTRef.current.depthTexture;
+        }
 
         const prevAutoClear = renderer.autoClear;
         renderer.autoClear = false;
@@ -480,10 +576,22 @@ export default function App() {
         camera.layers.enable(0);
         camera.layers.enable(BLOOM_LAYER);
 
+        if (sunDepthRTRef.current) {
+          renderSunDepthMap(renderer, scene, camera, sunDepthRTRef.current);
+        }
+
         const { scene: overlayScene, camera: overlayCamera, material } =
           bloomOverlayRef.current;
         material.uniforms.bloomTexture.value =
           bloomComposerRef.current.readBuffer.texture;
+        if (captureRTRef.current?.depthTexture) {
+          material.uniforms.sceneDepthTexture.value =
+            captureRTRef.current.depthTexture;
+        }
+        if (sunDepthRTRef.current?.depthTexture) {
+          material.uniforms.sunDepthTexture.value =
+            sunDepthRTRef.current.depthTexture;
+        }
 
         const prevAutoClear = renderer.autoClear;
         renderer.autoClear = false;
@@ -541,7 +649,9 @@ export default function App() {
       </div>
 
       <BottomBar />
+      <CockpitOverlay />
       <Pointer />
+      <FlyTouchControls />
       <PlanetLabels />
       <RareEvents />
 
@@ -575,7 +685,7 @@ export default function App() {
           ))}
 
           {backgroundGalaxies
-            .slice(0, lowQuality ? 2 : backgroundGalaxies.length)
+            .slice(0, lowQuality ? 2 : isMobile ? 3 : backgroundGalaxies.length)
             .map((galaxy, index) => (
             <BlackHole
               key={`bg-galaxy-${index}`}
@@ -584,11 +694,14 @@ export default function App() {
               tilt={galaxy.tilt}
               position={galaxy.position}
               size={galaxy.size}
+              armSpread={galaxy.armSpread}
+              brightCore={galaxy.brightCore}
+              coreColor={galaxy.coreColor}
             />
           ))}
 
           <Skybox />
-          <Nebula count={lowQuality ? 1 : isMobile ? 2 : 3} />
+          <Nebula count={lowQuality ? 18 : isMobile ? 24 : 33} />
           {!lowQuality && <SpaceDebris />}
           <Stars />
         </>

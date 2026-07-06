@@ -5,16 +5,17 @@ import * as rng from "./seededRandom";
 import {
   generateMoonsForPlanet,
   getPlanetVisualFlags,
+  getPlanetSurfaceTint,
 } from "./planetVisuals";
 
 export const SYSTEM_POSITIONS = [{ x: 0, y: 0, z: 0 }];
 
 export const SUN_SIZE_MIN = 18;
 export const SUN_SIZE_MAX = 24;
-export const PLANET_SIZE_MIN = 0.4;
-export const PLANET_SIZE_MAX = 2.5;
-export const ORBIT_GAP_MIN = 14;
-export const ORBIT_GAP_MAX = 20;
+export const PLANET_SIZE_MIN = 2;
+export const PLANET_SIZE_MAX = 12.5;
+export const ORBIT_GAP_MIN = 18;
+export const ORBIT_GAP_MAX = 26;
 
 const ASTEROID_COMPOSITIONS = ["Metallic", "Carbonaceous", "Rocky", "Icy"];
 const BELT_ROTATION_SPEED = 0.00005;
@@ -27,7 +28,7 @@ function generateSunName() {
 }
 
 export function computeFirstOrbitRadius(sunSize) {
-  return sunSize * 2.8 + utils.randomBetween(12, 20);
+  return sunSize * 3.6 + utils.randomBetween(28, 42);
 }
 
 function generateComets(planets, sunSize) {
@@ -174,7 +175,7 @@ export function generateUniverse({
       z: orbitRadius * Math.sin(angle),
       size,
       texture,
-      color: needCustomColor ? utils.getRandomHexColor() : 0xffffff,
+      color: needCustomColor ? getPlanetSurfaceTint() : 0xf0eeea,
       orbit: {
         angle,
         speed,
@@ -189,13 +190,8 @@ export function generateUniverse({
     });
   }
 
-  const howManyNeedRing = Math.floor(
-    utils.randomBetween(0, generatedUniverse.length / 3),
-  );
-
-  for (let index = 0; index < howManyNeedRing; index++) {
-    const randomIndex = Math.floor(rng.random() * generatedUniverse.length);
-    generatedUniverse[randomIndex].hasRing = true;
+  for (const planet of generatedUniverse) {
+    if (rng.random() < 0.38) planet.hasRing = true;
   }
 
   return generatedUniverse;
@@ -223,7 +219,7 @@ export function createPlanet({
     z: orbitRadius * Math.sin(angle),
     size,
     texture,
-    color: needCustomColor ? utils.getRandomHexColor() : 0xffffff,
+    color: needCustomColor ? getPlanetSurfaceTint() : 0xf0eeea,
     orbit: {
       angle,
       speed,
@@ -235,7 +231,7 @@ export function createPlanet({
     hasClouds: visualFlags.hasClouds,
     cityLights: visualFlags.cityLights,
     hasSatellite: Boolean(planetInfo.inhabited),
-    hasRing: rng.random() < 0.25,
+    hasRing: rng.random() < 0.38,
   };
 }
 
